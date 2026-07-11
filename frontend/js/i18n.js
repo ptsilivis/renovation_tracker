@@ -15,7 +15,7 @@ const DICT = {
 
     // overview
     statBudget: 'Προϋπολογισμός', statSpent: 'Δαπανήθηκε', statRemaining: 'Υπόλοιπο',
-    statProgress: 'Πρόοδος εργασιών',
+    statProgress: 'Πρόοδος εργασιών', editHint: 'Πατήστε για επεξεργασία',
     timeline: 'Χρονοδιάγραμμα φάσεων', today: 'Σήμερα',
     plannedVsActual: 'Προϋπολογισμός vs Πραγματικό', planned: 'Πρόβλεψη', actual: 'Πραγματικό',
     nextTasks: 'Επόμενες εργασίες', recentActivity: 'Πρόσφατη δραστηριότητα',
@@ -65,7 +65,7 @@ const DICT = {
     loginBtn: 'Sign in', loginError: 'Wrong email or password.',
 
     statBudget: 'Budget', statSpent: 'Spent', statRemaining: 'Remaining',
-    statProgress: 'Task progress',
+    statProgress: 'Task progress', editHint: 'Click to edit',
     timeline: 'Phase timeline', today: 'Today',
     plannedVsActual: 'Planned vs Actual', planned: 'Planned', actual: 'Actual',
     nextTasks: 'Next tasks', recentActivity: 'Recent activity',

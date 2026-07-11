@@ -1,10 +1,36 @@
 import { h, money, variance } from '../ui.js';
 import { coll } from '../state.js';
+import * as store from '../state.js';
 import { t, localName } from '../i18n.js';
 import { budgetStats, taskProgress, costTotals, categoryMap } from '../compute.js';
 
 const PHASE_COLORS = ['#1f4e5f', '#35606e', '#4d7a86', '#6d9aa2', '#8fb3b8', '#a4442f', '#c06a4f', '#7a8b52'];
 const monthIdx = (s) => { const [y, m] = (s || '').split('-').map(Number); return y * 12 + (m - 1); };
+
+// Budget is a stored setting, editable inline (all 4 members are admin).
+function budgetCard(budget) {
+  const input = h('input', {
+    type: 'number', step: '100', value: budget, title: t('statBudget'),
+    class: 'tnum', 'aria-label': t('statBudget'),
+    style: {
+      width: '100%', border: 'none', background: 'transparent', outline: 'none',
+      font: '700 26px/1.1 Literata, serif', color: 'var(--ink)', marginTop: '4px',
+      padding: '2px 4px', borderRadius: '8px', cursor: 'text',
+    },
+    onfocus: (e) => { e.target.style.boxShadow = 'inset 0 0 0 2px var(--teal)'; e.target.select(); },
+    onblur: (e) => { e.target.style.boxShadow = 'none'; },
+    onchange: (e) => {
+      const v = Number(e.target.value);
+      if (v >= 0 && v !== budget) store.patchSettings({ total_budget: v });
+    },
+  });
+  return h('div', { class: 'card card-pad' },
+    h('div', { class: 'stat-label' }, t('statBudget')),
+    h('div', { style: { display: 'flex', alignItems: 'baseline', gap: '4px' } }, input, h('span', { style: { color: 'var(--muted2)', fontWeight: 700 } }, '€')),
+    h('div', { class: 'stat-sub' }, t('editHint')),
+    h('div', { class: 'bar-track' }, h('div', { class: 'bar-fill', style: { width: '100%', background: 'var(--teal)' } })),
+  );
+}
 
 function statCard(label, value, sub, pct, barColor, valueColor) {
   return h('div', { class: 'card card-pad' },
@@ -124,7 +150,7 @@ export default function render(root) {
 
   root.append(h('section', { class: 'section' },
     h('div', { class: 'stat-grid' },
-      statCard(t('statBudget'), money(budget), '', 100, 'var(--teal)'),
+      budgetCard(budget),
       statCard(t('statSpent'), money(spent), Math.round(spentPct) + '%', spentPct, spentPct > 100 ? 'var(--accent)' : 'var(--teal)', spentPct > 100 ? 'var(--accent)' : undefined),
       statCard(t('statRemaining'), money(remaining), '', 100 - spentPct, remaining < 0 ? 'var(--accent)' : 'var(--ok)', remaining < 0 ? 'var(--accent)' : undefined),
       statCard(t('statProgress'), prog.pct + '%', `${prog.done}/${prog.total}`, prog.pct, 'var(--teal)')),
