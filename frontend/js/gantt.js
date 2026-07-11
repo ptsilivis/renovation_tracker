@@ -65,7 +65,10 @@ export function gantt() {
   const todayPct = ((now.getFullYear() * 12 + now.getMonth()) - min + now.getDate() / 30) / span * 100;
 
   // ---- phase rows -----------------------------------------------------------
+  const ROWH = 38;
+  const rowEls = [];
   const rows = phases.map((p, i) => {
+    let rowEl;
     const color = COLORS[i % COLORS.length];
     let sI = clamp(idx(p.start), min, max);
     let eI = clamp(idx(p.end), sI, max);
@@ -77,20 +80,35 @@ export function gantt() {
       onblur: (e) => { e.target.style.boxShadow = 'none'; },
       onchange: (e) => store.update('phases', p.id, { [state.lang === 'en' ? 'name_en' : 'name_el']: e.target.value }),
     });
-    const move = (dir) => {
-      const j = i + dir;
-      if (j < 0 || j >= phases.length) return;
-      const q = phases[j];
-      store.mutate(async () => {
-        await api.update('phases', p.id, { sort_order: q.sort_order });
-        await api.update('phases', q.id, { sort_order: p.sort_order });
-      });
-    };
-    const reorder = h('div', { style: { display: 'flex', flexDirection: 'column', lineHeight: 1 } },
-      h('button', { class: 'del-btn', style: { width: '18px', height: '16px', color: 'var(--muted2)' }, title: '↑', disabled: i === 0, onclick: () => move(-1) }, '▲'),
-      h('button', { class: 'del-btn', style: { width: '18px', height: '16px', color: 'var(--muted2)' }, title: '↓', disabled: i === phases.length - 1, onclick: () => move(1) }, '▼'));
+    // Drag-to-reorder via a subtle grip (no arrow buttons).
+    const grip = h('div', { class: 'gt-grip', title: t('dragReorder') }, '⠿');
+    grip.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      const y0 = e.clientY;
+      rowEl.style.position = 'relative'; rowEl.style.zIndex = '5'; rowEl.style.opacity = '0.9';
+      grip.style.cursor = 'grabbing';
+      const mv = (ev) => { rowEl.style.transform = `translateY(${ev.clientY - y0}px)`; };
+      const up = (ev) => {
+        document.removeEventListener('pointermove', mv);
+        document.removeEventListener('pointerup', up);
+        rowEl.style.transform = ''; rowEl.style.zIndex = ''; rowEl.style.opacity = ''; grip.style.cursor = '';
+        const target = clamp(i + Math.round((ev.clientY - y0) / ROWH), 0, phases.length - 1);
+        if (target !== i) {
+          const arr = [...phases];
+          const [moved] = arr.splice(i, 1);
+          arr.splice(target, 0, moved);
+          store.mutate(async () => {
+            for (let k = 0; k < arr.length; k++) {
+              if (arr[k].sort_order !== k + 1) await api.update('phases', arr[k].id, { sort_order: k + 1 });
+            }
+          });
+        }
+      };
+      document.addEventListener('pointermove', mv);
+      document.addEventListener('pointerup', up);
+    });
     const labelCell = h('div', { style: { width: LABELW + 'px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px', paddingRight: '10px' } },
-      reorder, nameInput,
+      grip, nameInput,
       h('button', { class: 'del-btn', title: t('delete'), onclick: () => store.remove('phases', p.id) }, '×'));
 
     // track + bar
@@ -128,7 +146,9 @@ export function gantt() {
       store.update('phases', p.id, { milestone: toStr(mI) });
     });
 
-    return h('div', { style: { display: 'flex', alignItems: 'center', height: '38px' } }, labelCell, track);
+    rowEl = h('div', { style: { display: 'flex', alignItems: 'center', height: ROWH + 'px' } }, labelCell, track);
+    rowEls.push(rowEl);
+    return rowEl;
   });
 
   const barsArea = h('div', { style: { position: 'relative' } }, ...rows);

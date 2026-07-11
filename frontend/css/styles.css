@@ -155,6 +155,9 @@ select.field { padding: 8px 10px; }
 .gt-milestone { position: absolute; top: 50%; width: 12px; height: 12px; background: var(--accent);
   transform: translate(-50%, -50%) rotate(45deg); border: 2px solid #fff; box-shadow: var(--shadow); cursor: pointer; }
 .gt-milestone:hover { transform: translate(-50%, -50%) rotate(45deg) scale(1.2); }
+.gt-grip { flex-shrink: 0; width: 16px; text-align: center; color: var(--muted2); cursor: grab;
+  font-size: 13px; line-height: 1; user-select: none; touch-action: none; border-radius: 5px; }
+.gt-grip:hover { color: var(--teal); background: var(--panel); }
 
 /* planned vs actual */
 .pva { display: flex; align-items: stretch; gap: 10px; border-bottom: 1px solid #eef1f2; }

@@ -126,16 +126,16 @@ SURFACES = [
     (ROOM["bed2"], "floor", "Δάπεδο", 320, 380, "Ξύλινο"),
 ]
 
-# name_el, name_en, start, end
+# name_el, name_en, start, end — schedule starts ~October with a slow ramp.
 PHASES = [
-    ("Άδειες & Μελέτες", "Permits & studies", "2026-03", "2026-04"),
-    ("Καθαιρέσεις", "Demolition", "2026-04", "2026-05"),
-    ("Στέγη", "Roof", "2026-05", "2026-06"),
-    ("Η/Μ εγκαταστάσεις", "Electrical & plumbing", "2026-06", "2026-07"),
-    ("Επιχρίσματα & Αρμολόγημα", "Plaster & pointing", "2026-07", "2026-09"),
-    ("Δάπεδα & Κουφώματα", "Floors & frames", "2026-09", "2026-12"),
-    ("Βαφές & Φινιρίσματα", "Paint & finishes", "2027-01", "2027-02"),
-    ("Εξωτερικοί χώροι", "Outdoor works", "2027-03", "2027-05"),
+    ("Άδειες & Μελέτες", "Permits & studies", "2026-10", "2026-12"),
+    ("Καθαιρέσεις", "Demolition", "2027-01", "2027-02"),
+    ("Στέγη", "Roof", "2027-02", "2027-04"),
+    ("Η/Μ εγκαταστάσεις", "Electrical & plumbing", "2027-04", "2027-06"),
+    ("Επιχρίσματα & Αρμολόγημα", "Plaster & pointing", "2027-06", "2027-08"),
+    ("Δάπεδα & Κουφώματα", "Floors & frames", "2027-09", "2027-12"),
+    ("Βαφές & Φινιρίσματα", "Paint & finishes", "2028-01", "2028-02"),
+    ("Εξωτερικοί χώροι", "Outdoor works", "2028-03", "2028-05"),
 ]
 
 # ts(ms), el, en
@@ -168,7 +168,7 @@ def seed_all(db: Session, reset: bool = False) -> None:
         db.commit()
 
     if db.query(Category).count() == 0:
-        db.add(Setting(id="app", total_budget=50000, project_start="2026-03", project_end="2027-05"))
+        db.add(Setting(id="app", total_budget=50000, project_start="2026-10", project_end="2028-05"))
         for cid, el, en, order in CATEGORIES:
             db.add(Category(id=cid, name_el=el, name_en=en, sort_order=order))
         for rid, name, floor in ROOMS:
@@ -190,7 +190,7 @@ def seed_all(db: Session, reset: bool = False) -> None:
                            width_cm=w, height_cm=h, notes=notes))
         for i, (el, en, start, end) in enumerate(PHASES, start=1):
             db.add(Phase(id=new_id("phases"), name_el=el, name_en=en, start=start,
-                         end=end, milestone=("2026-06" if en == "Roof" else None), sort_order=i))
+                         end=end, milestone=("2027-03" if en == "Roof" else None), sort_order=i))
         for ts, el, en in ACTIVITY:
             db.add(Activity(id=new_id("activity"), ts=ts, text_el=el, text_en=en))
         db.commit()

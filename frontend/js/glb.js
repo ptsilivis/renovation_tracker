@@ -1,14 +1,15 @@
 // Minimal GLB viewer. Loads three.js (+ loaders/controls) from a CDN as ES
 // modules on demand, renders the model with orbit controls. Kept isolated so
 // the rest of the app has no 3D dependency until the floor-plan needs it.
-const CDN = 'https://cdn.jsdelivr.net/npm/three@0.160.0';
+// Resolved via the import map in index.html so the addons' bare `three`
+// imports share the same module instance.
 let THREE, GLTFLoader, OrbitControls;
 
 async function ensureThree() {
   if (THREE) return;
-  THREE = await import(`${CDN}/build/three.module.js`);
-  ({ GLTFLoader } = await import(`${CDN}/examples/jsm/loaders/GLTFLoader.js`));
-  ({ OrbitControls } = await import(`${CDN}/examples/jsm/controls/OrbitControls.js`));
+  THREE = await import('three');
+  ({ GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js'));
+  ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
 }
 
 // Mount a GLB at `url` into `container`. Returns a dispose() function.

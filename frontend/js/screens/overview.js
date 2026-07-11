@@ -5,26 +5,31 @@ import { t, localName } from '../i18n.js';
 import { budgetStats, taskProgress, costTotals, categoryMap } from '../compute.js';
 import { gantt } from '../gantt.js';
 
-// Budget is a stored setting, editable inline (all 4 members are admin).
+// Budget is a stored setting. Shown formatted like every other figure; click to
+// edit the raw number in place (all 4 members are admin).
 function budgetCard(budget) {
-  const input = h('input', {
-    type: 'number', step: '100', value: budget, title: t('statBudget'),
-    class: 'tnum', 'aria-label': t('statBudget'),
-    style: {
-      width: '100%', border: 'none', background: 'transparent', outline: 'none',
-      font: '700 26px/1.1 Literata, serif', color: 'var(--ink)', marginTop: '4px',
-      padding: '2px 4px', borderRadius: '8px', cursor: 'text',
-    },
-    onfocus: (e) => { e.target.style.boxShadow = 'inset 0 0 0 2px var(--teal)'; e.target.select(); },
-    onblur: (e) => { e.target.style.boxShadow = 'none'; },
-    onchange: (e) => {
-      const v = Number(e.target.value);
-      if (v >= 0 && v !== budget) store.patchSettings({ total_budget: v });
-    },
+  const display = h('div', { class: 'stat-value tnum', style: { cursor: 'pointer' }, title: t('editHint') }, money(budget));
+  display.addEventListener('click', () => {
+    const input = h('input', {
+      type: 'number', step: '100', value: budget, class: 'tnum', 'aria-label': t('statBudget'),
+      style: { width: '100%', border: 'none', background: 'transparent', outline: 'none',
+        font: '700 26px/1.1 Literata, serif', color: 'var(--ink)', padding: '0 2px', borderRadius: '8px', boxShadow: 'inset 0 0 0 2px var(--teal)' },
+    });
+    const commit = () => {
+      const v = Number(input.value);
+      if (v >= 0 && v !== budget) store.patchSettings({ total_budget: v });  // triggers re-render
+      else input.replaceWith(display);
+    };
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') input.blur();
+      else if (e.key === 'Escape') { input.value = budget; input.blur(); }
+    });
+    display.replaceWith(input); input.focus(); input.select();
   });
   return h('div', { class: 'card card-pad' },
     h('div', { class: 'stat-label' }, t('statBudget')),
-    h('div', { style: { display: 'flex', alignItems: 'baseline', gap: '4px' } }, input, h('span', { style: { color: 'var(--muted2)', fontWeight: 700 } }, '€')),
+    display,
     h('div', { class: 'stat-sub' }, t('editHint')),
     h('div', { class: 'bar-track' }, h('div', { class: 'bar-fill', style: { width: '100%', background: 'var(--teal)' } })),
   );
