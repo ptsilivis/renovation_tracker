@@ -168,7 +168,7 @@ def seed_all(db: Session, reset: bool = False) -> None:
         db.commit()
 
     if db.query(Category).count() == 0:
-        db.add(Setting(id="app", total_budget=50000))
+        db.add(Setting(id="app", total_budget=50000, project_start="2026-03", project_end="2027-05"))
         for cid, el, en, order in CATEGORIES:
             db.add(Category(id=cid, name_el=el, name_en=en, sort_order=order))
         for rid, name, floor in ROOMS:
@@ -190,7 +190,7 @@ def seed_all(db: Session, reset: bool = False) -> None:
                            width_cm=w, height_cm=h, notes=notes))
         for i, (el, en, start, end) in enumerate(PHASES, start=1):
             db.add(Phase(id=new_id("phases"), name_el=el, name_en=en, start=start,
-                         end=end, sort_order=i))
+                         end=end, milestone=("2026-06" if en == "Roof" else None), sort_order=i))
         for ts, el, en in ACTIVITY:
             db.add(Activity(id=new_id("activity"), ts=ts, text_el=el, text_en=en))
         db.commit()

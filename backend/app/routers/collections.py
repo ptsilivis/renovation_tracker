@@ -23,7 +23,11 @@ def snapshot(db: Session = Depends(get_db)):
         db.query(Activity).order_by(Activity.ts.desc()).limit(40).all()
     )
     out = {
-        "settings": {"total_budget": float(setting.total_budget) if setting else 0},
+        "settings": {
+            "total_budget": float(setting.total_budget) if setting else 0,
+            "project_start": setting.project_start if setting else None,
+            "project_end": setting.project_end if setting else None,
+        },
         "activity": [
             {"id": a.id, "ts": a.ts, "el": a.text_el, "en": a.text_en} for a in activity
         ],

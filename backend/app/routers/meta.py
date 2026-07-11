@@ -13,10 +13,17 @@ from ..models import Activity, Setting, User
 router = APIRouter(prefix="/api", tags=["meta"], dependencies=[Depends(get_current_user)])
 
 
+def _settings_out(s: Setting | None) -> dict:
+    return {
+        "total_budget": float(s.total_budget) if s else 0,
+        "project_start": s.project_start if s else None,
+        "project_end": s.project_end if s else None,
+    }
+
+
 @router.get("/settings")
 def get_settings(db: Session = Depends(get_db)):
-    s = db.get(Setting, "app")
-    return {"total_budget": float(s.total_budget) if s else 0}
+    return _settings_out(db.get(Setting, "app"))
 
 
 @router.patch("/settings")
@@ -27,8 +34,12 @@ def patch_settings(patch: dict = Body(...), db: Session = Depends(get_db)):
         db.add(s)
     if "total_budget" in patch:
         s.total_budget = patch["total_budget"]
+    if "project_start" in patch:
+        s.project_start = patch["project_start"] or None
+    if "project_end" in patch:
+        s.project_end = patch["project_end"] or None
     db.commit()
-    return {"total_budget": float(s.total_budget)}
+    return _settings_out(s)
 
 
 @router.post("/activity")

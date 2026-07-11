@@ -32,6 +32,8 @@ class Setting(Base):
     __tablename__ = "settings"
     id: Mapped[str] = mapped_column(String, primary_key=True, default="app")
     total_budget: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
+    project_start: Mapped[str | None] = mapped_column(CHAR(7), nullable=True)  # YYYY-MM
+    project_end: Mapped[str | None] = mapped_column(CHAR(7), nullable=True)
 
 
 class Category(Base):
@@ -115,6 +117,7 @@ class Phase(Base):
     name_en: Mapped[str] = mapped_column(String, default="")
     start: Mapped[str] = mapped_column(CHAR(7), default="")  # YYYY-MM
     end: Mapped[str] = mapped_column(CHAR(7), default="")
+    milestone: Mapped[str | None] = mapped_column(CHAR(7), nullable=True)  # optional YYYY-MM
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
 
 

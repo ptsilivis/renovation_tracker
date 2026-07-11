@@ -17,6 +17,9 @@ const DICT = {
     statBudget: 'Προϋπολογισμός', statSpent: 'Δαπανήθηκε', statRemaining: 'Υπόλοιπο',
     statProgress: 'Πρόοδος εργασιών', editHint: 'Πατήστε για επεξεργασία',
     timeline: 'Χρονοδιάγραμμα φάσεων', today: 'Σήμερα',
+    projectRange: 'Διάρκεια έργου', phaseName: 'Όνομα φάσης', addPhase: 'Φάση', newPhase: 'Νέα φάση',
+    clearMilestone: 'Κλικ για αφαίρεση ορόσημου',
+    ganttHint: 'Σύρετε τις μπάρες για αλλαγή ημερομηνιών, κλικ στη γραμμή για ορόσημο, ▲▼ για αναδιάταξη.',
     plannedVsActual: 'Προϋπολογισμός vs Πραγματικό', planned: 'Πρόβλεψη', actual: 'Πραγματικό',
     nextTasks: 'Επόμενες εργασίες', recentActivity: 'Πρόσφατη δραστηριότητα',
 
@@ -67,6 +70,9 @@ const DICT = {
     statBudget: 'Budget', statSpent: 'Spent', statRemaining: 'Remaining',
     statProgress: 'Task progress', editHint: 'Click to edit',
     timeline: 'Phase timeline', today: 'Today',
+    projectRange: 'Project span', phaseName: 'Phase name', addPhase: 'Phase', newPhase: 'New phase',
+    clearMilestone: 'Click to remove milestone',
+    ganttHint: 'Drag bars to change dates, click a row to set a milestone, ▲▼ to reorder.',
     plannedVsActual: 'Planned vs Actual', planned: 'Planned', actual: 'Actual',
     nextTasks: 'Next tasks', recentActivity: 'Recent activity',
 

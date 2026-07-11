@@ -3,9 +3,7 @@ import { coll } from '../state.js';
 import * as store from '../state.js';
 import { t, localName } from '../i18n.js';
 import { budgetStats, taskProgress, costTotals, categoryMap } from '../compute.js';
-
-const PHASE_COLORS = ['#1f4e5f', '#35606e', '#4d7a86', '#6d9aa2', '#8fb3b8', '#a4442f', '#c06a4f', '#7a8b52'];
-const monthIdx = (s) => { const [y, m] = (s || '').split('-').map(Number); return y * 12 + (m - 1); };
+import { gantt } from '../gantt.js';
 
 // Budget is a stored setting, editable inline (all 4 members are admin).
 function budgetCard(budget) {
@@ -39,45 +37,6 @@ function statCard(label, value, sub, pct, barColor, valueColor) {
     h('div', { class: 'stat-sub' }, sub),
     h('div', { class: 'bar-track' }, h('div', { class: 'bar-fill', style: { width: Math.min(100, Math.max(0, pct)) + '%', background: barColor } })),
   );
-}
-
-function timeline() {
-  const phases = [...coll('phases')].sort((a, b) => monthIdx(a.start) - monthIdx(b.start));
-  if (!phases.length) return null;
-  const min = Math.min(...phases.map((p) => monthIdx(p.start)));
-  const max = Math.max(...phases.map((p) => monthIdx(p.end)));
-  const span = max - min + 1;
-  const months = [];
-  for (let i = 0; i < span; i++) {
-    const idx = min + i;
-    const y = Math.floor(idx / 12), m = idx % 12;
-    months.push(new Date(y, m, 1).toLocaleDateString('el-GR', { month: 'short', year: '2-digit' }));
-  }
-  const now = new Date();
-  const todayPct = ((now.getFullYear() * 12 + now.getMonth()) - min + now.getDate() / 30) / span * 100;
-
-  const labelsCol = h('div', { style: { width: '170px', flexShrink: 0 } });
-  const barsCol = h('div', { style: { flex: '1', position: 'relative' } });
-  phases.forEach((p, i) => {
-    labelsCol.append(h('div', { class: 'tl-row', style: { paddingRight: '10px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' } }, localName(p)));
-    const left = (monthIdx(p.start) - min) / span * 100;
-    const width = (monthIdx(p.end) - monthIdx(p.start) + 1) / span * 100;
-    barsCol.append(h('div', { class: 'tl-bar-row' },
-      h('div', { class: 'tl-bar', style: { left: left + '%', width: width + '%', background: PHASE_COLORS[i % PHASE_COLORS.length] } })));
-  });
-  if (todayPct >= 0 && todayPct <= 100) {
-    barsCol.append(h('div', { class: 'tl-today', style: { left: todayPct + '%' } },
-      h('span', { style: { position: 'absolute', top: '-2px', left: '5px', fontSize: '10px', fontWeight: 700, color: 'var(--accent)', whiteSpace: 'nowrap' } }, t('today'))));
-  }
-
-  const monthsRow = h('div', { style: { display: 'flex' } },
-    h('div', { style: { width: '170px', flexShrink: 0 } }),
-    h('div', { style: { flex: '1', display: 'flex' } }, months.map((m) => h('div', { class: 'tl-month' }, m))));
-
-  return h('div', { class: 'card card-pad' },
-    h('h2', { style: { margin: '0 0 14px', fontSize: '14px' } }, t('timeline')),
-    h('div', { class: 'tl-scroll' }, h('div', { class: 'tl-inner' }, monthsRow,
-      h('div', { style: { display: 'flex' } }, labelsCol, barsCol))));
 }
 
 function plannedVsActual() {
@@ -154,7 +113,7 @@ export default function render(root) {
       statCard(t('statSpent'), money(spent), Math.round(spentPct) + '%', spentPct, spentPct > 100 ? 'var(--accent)' : 'var(--teal)', spentPct > 100 ? 'var(--accent)' : undefined),
       statCard(t('statRemaining'), money(remaining), '', 100 - spentPct, remaining < 0 ? 'var(--accent)' : 'var(--ok)', remaining < 0 ? 'var(--accent)' : undefined),
       statCard(t('statProgress'), prog.pct + '%', `${prog.done}/${prog.total}`, prog.pct, 'var(--teal)')),
-    timeline(),
+    gantt(),
     h('div', { class: 'two-col' }, plannedVsActual(), h('div', { style: { display: 'flex', flexDirection: 'column', gap: '16px' } }, nextTasks(), recentActivity())),
   ));
 }
