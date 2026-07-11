@@ -1,0 +1,90 @@
+// Bootstrap: login gate → load data → render shell (header + active screen).
+import { api } from './api.js';
+import { state, loadData, onRerender, setLang } from './state.js';
+import { t } from './i18n.js';
+import { h, clear } from './ui.js';
+import { ROUTES, currentKey, renderScreen } from './router.js';
+
+const appEl = document.getElementById('app');
+
+function renderLogin() {
+  const err = h('div', { class: 'login-err' });
+  const email = h('input', { class: 'field', type: 'email', placeholder: t('loginEmail'), autocomplete: 'username' });
+  const pass = h('input', { class: 'field', type: 'password', placeholder: t('loginPassword'), autocomplete: 'current-password' });
+  const btn = h('button', { class: 'btn', type: 'submit' }, t('loginBtn'));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    err.textContent = '';
+    btn.disabled = true;
+    try {
+      state.user = await api.login(email.value.trim(), pass.value);
+      await loadData();
+      renderApp();
+    } catch {
+      err.textContent = t('loginError');
+      btn.disabled = false;
+    }
+  };
+
+  const form = h('form', { class: 'card card-pad login-card', onsubmit: submit },
+    h('div', { class: 'brand' }, h('div', { class: 'logo' }, 'K'), h('h1', {}, t('loginTitle'))),
+    h('label', { class: 'stat-label' }, t('loginEmail')), email,
+    h('label', { class: 'stat-label' }, t('loginPassword')), pass,
+    err, btn,
+  );
+  clear(appEl).append(h('div', { class: 'login-wrap' }, form));
+  email.focus();
+}
+
+function renderHeader() {
+  const active = currentKey();
+  const nav = h('nav', { class: 'nav' },
+    ROUTES.map((r) =>
+      h('button', {
+        class: active === r.key ? 'active' : '',
+        onclick: () => { location.hash = '#/' + r.key; },
+      }, t(r.label)),
+    ),
+  );
+  const langBtn = h('button', { class: 'lang-btn', onclick: () => setLang(state.lang === 'el' ? 'en' : 'el') },
+    state.lang === 'el' ? 'EN' : 'ΕΛ');
+  const logoutBtn = h('button', { class: 'icon-btn', onclick: async () => { await api.logout(); location.reload(); } }, t('logout'));
+
+  return h('header', { class: 'hdr' },
+    h('div', { class: 'hdr-in' },
+      h('div', { class: 'brand' },
+        h('div', { class: 'logo' }, 'K'),
+        h('div', {}, h('div', { class: 'brand-title' }, 'Kampos'), h('div', { class: 'brand-sub' }, t('appSubtitle'))),
+      ),
+      nav,
+      h('div', { class: 'hdr-right' },
+        h('span', { class: 'role-badge' }, state.user ? state.user.display_name : ''),
+        langBtn, logoutBtn,
+      ),
+    ),
+  );
+}
+
+function renderApp() {
+  if (!state.user) return renderLogin();
+  const main = h('main', { class: 'main' });
+  clear(appEl).append(renderHeader(), main);
+  renderScreen(main);
+}
+
+onRerender(renderApp);
+window.addEventListener('hashchange', renderApp);
+
+async function boot() {
+  document.documentElement.lang = state.lang;
+  try {
+    state.user = await api.me();
+    await loadData();
+  } catch {
+    state.user = null;
+  }
+  renderApp();
+}
+
+boot();
