@@ -22,6 +22,20 @@ export function h(tag, props = {}, ...children) {
 
 export function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); return node; }
 
+const SVGNS = 'http://www.w3.org/2000/svg';
+// SVG element builder (createElementNS). Attrs set via setAttribute; on* are events.
+export function svgEl(tag, props = {}, ...children) {
+  const el = document.createElementNS(SVGNS, tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+    else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2).toLowerCase(), v);
+    else el.setAttribute(k, String(v));
+  }
+  for (const c of children.flat()) { if (c != null && c !== false) el.append(c.nodeType ? c : document.createTextNode(String(c))); }
+  return el;
+}
+
 const eur0 = new Intl.NumberFormat('el-GR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 const eur2 = new Intl.NumberFormat('el-GR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 export function money(n, decimals = false) { return (decimals ? eur2 : eur0).format(Number(n) || 0); }
