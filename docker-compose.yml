@@ -1,0 +1,19 @@
+# Local development Postgres. On the Raspberry Pi, use the system Postgres
+# service instead (see deploy/DEPLOY.md) and point backend/.env at it.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: kampos-db
+    environment:
+      POSTGRES_USER: kampos
+      POSTGRES_PASSWORD: kampos
+      POSTGRES_DB: kampos
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kampos"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
