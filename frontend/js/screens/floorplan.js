@@ -3,10 +3,10 @@ import { coll } from '../state.js';
 import * as store from '../state.js';
 import { api } from '../api.js';
 import { t } from '../i18n.js';
-import { mountGlb } from '../glb.js';
+import { glbToPlan } from '../glb.js';
 
 // Local (non-persisted) editor UI state.
-const ed = { zoom: 1, showDims: false, sel: null, glbUrl: null, disposeGlb: null };
+const ed = { zoom: 1, showDims: false, sel: null, converting: false };
 const CANVAS_W = 900, CANVAS_H = 620, GRID = 40;
 
 // plan_rooms rows: { id, x, y, w, h, name }.  plan_walls rows: { id, x1,y1,x2,y2 }.
@@ -35,7 +35,21 @@ export default function render(root) {
 
   function toolbar() {
     const fileGlb = h('input', { type: 'file', accept: '.glb,.gltf', style: { display: 'none' },
-      onchange: async (e) => { const f = e.target.files[0]; if (!f) return; const r = await api.upload(f); ed.glbUrl = r.url; rebuild(); } });
+      onchange: async (e) => {
+        const f = e.target.files[0]; if (!f) return;
+        ed.converting = true; rebuild();
+        try {
+          const r = await api.upload(f);
+          const { segments } = await glbToPlan(r.url, CANVAS_W, CANVAS_H);
+          ed.converting = false;
+          if (!segments.length) { rebuild(); return; }
+          await store.create('plan_underlays', { kind: 'drawing', file: r.name, segments });
+        } catch (err) {
+          ed.converting = false;
+          console.error('GLB convert failed', err);
+          rebuild();
+        }
+      } });
     const fileImg = h('input', { type: 'file', accept: 'image/*', style: { display: 'none' },
       onchange: async (e) => { const f = e.target.files[0]; if (!f) return; const r = await api.upload(f); await store.create('plan_underlays', { kind: 'image', file: r.name, w: CANVAS_W, h: CANVAS_H, opacity: 0.6 }); } });
     return h('div', { class: 'plan-toolbar' },
@@ -45,7 +59,7 @@ export default function render(root) {
       h('div', { style: { display: 'flex', gap: '2px' } },
         h('button', { class: 'btn-ghost', onclick: () => { ed.zoom = Math.max(0.4, ed.zoom - 0.1); rebuild(); } }, '−'),
         h('button', { class: 'btn-ghost', onclick: () => { ed.zoom = Math.min(2.5, ed.zoom + 0.1); rebuild(); } }, '+')),
-      h('label', { class: 'btn-dashed' }, '⤒ ' + t('importGlb'), fileGlb),
+      h('label', { class: 'btn-dashed' }, (ed.converting ? '… ' : '⤒ ') + t('importGlb'), fileGlb),
       h('label', { class: 'btn-dashed' }, '🖼', fileImg));
   }
 
@@ -53,6 +67,7 @@ export default function render(root) {
     const rooms = coll('plan_rooms');
     const walls = coll('plan_walls');
     const underlay = coll('plan_underlays').find((u) => u.kind === 'image');
+    const drawing = coll('plan_underlays').find((u) => u.kind === 'drawing');
 
     const svg = svgEl('svg', { class: 'plan-svg', viewBox: `0 0 ${CANVAS_W} ${CANVAS_H}`, onmousedown: () => { ed.sel = null; rebuild(); } });
     const g = svgEl('g', { transform: `scale(${ed.zoom})` });
@@ -63,6 +78,13 @@ export default function render(root) {
     for (let y = 0; y <= CANVAS_H; y += GRID) g.append(svgEl('line', { x1: 0, y1: y, x2: CANVAS_W, y2: y, stroke: '#eef2f3', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }));
 
     if (underlay) g.append(svgEl('image', { href: '/files/' + underlay.file, x: 0, y: 0, width: underlay.w || CANVAS_W, height: underlay.h || CANVAS_H, opacity: underlay.opacity ?? 0.6, preserveAspectRatio: 'none', style: { pointerEvents: 'none' } }));
+
+    // 2D plan projected from an imported GLB (non-interactive backdrop lines).
+    if (drawing && Array.isArray(drawing.segments)) {
+      const dg = svgEl('g', { style: { pointerEvents: 'none' } });
+      for (const s of drawing.segments) dg.append(svgEl('line', { x1: s[0], y1: s[1], x2: s[2], y2: s[3], stroke: '#35606e', 'stroke-width': 1.3, 'vector-effect': 'non-scaling-stroke', 'stroke-linecap': 'round' }));
+      g.append(dg);
+    }
 
     // rooms
     for (const rm of rooms) {
@@ -111,13 +133,14 @@ export default function render(root) {
     }
 
     const canvasCard = h('div', { class: 'card', style: { overflow: 'hidden', position: 'relative' } }, toolbar(), svg);
-    if (!rooms.length && !walls.length && !underlay) {
+    if (!rooms.length && !walls.length && !underlay && !drawing) {
       canvasCard.append(h('div', { class: 'hint', style: { position: 'absolute', left: 0, right: 0, top: '55%', textAlign: 'center', padding: '0 40px' } }, t('planEmptyHint')));
     }
 
     // selected element actions (delete) + underlay opacity
     const sideBits = [];
     if (ed.sel) sideBits.push(h('button', { class: 'btn-ghost', onclick: () => { store.remove(ed.sel.type, ed.sel.id); ed.sel = null; } }, t('delete')));
+    if (drawing) sideBits.push(h('button', { class: 'btn-ghost', onclick: () => store.remove('plan_underlays', drawing.id) }, t('clearDrawing')));
     if (underlay) sideBits.push(h('label', { class: 'hint', style: { display: 'flex', gap: '6px', alignItems: 'center' } }, t('showDims'),
       h('input', { type: 'range', min: 0.1, max: 1, step: 0.05, value: underlay.opacity ?? 0.6, style: { accentColor: 'var(--teal)' }, onchange: (e) => store.update('plan_underlays', underlay.id, { opacity: Number(e.target.value) }) }),
       h('button', { class: 'del-btn', onclick: () => store.remove('plan_underlays', underlay.id) }, '×')));
@@ -125,14 +148,6 @@ export default function render(root) {
     const parts = [h('div', { class: 'row-between' }, h('h1', { class: 'page-title', style: { flex: 1 } }, t('navPlan')),
       ...sideBits), h('div', { class: 'hint' }, t('planHint')), canvasCard];
 
-    // 3D GLB panel
-    if (ed.glbUrl) {
-      const holder = h('div', { class: 'card', style: { height: '440px', overflow: 'hidden' } });
-      parts.push(holder);
-      mountGlb(holder, ed.glbUrl).then((dispose) => { ed.disposeGlb = dispose; }).catch(() => {
-        holder.append(h('div', { class: 'hint', style: { padding: '40px' } }, 'GLB: three.js load failed'));
-      });
-    }
     root.append(h('section', { class: 'section' }, ...parts));
   }
   build();

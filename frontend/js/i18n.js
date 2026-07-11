@@ -54,7 +54,7 @@ const DICT = {
     planHint: 'Σύρετε δωμάτια και τοίχους. Οι αλλαγές αποθηκεύονται αυτόματα.',
     addPlanRoom: 'Δωμάτιο', addPlanWall: 'Τοίχος', showDims: 'Διαστάσεις',
     planEmptyHint: 'Προσθέστε δωμάτια ή εισάγετε αρχείο GLB για να ξεκινήσετε.',
-    importGlb: 'Εισαγωγή GLB',
+    importGlb: 'Εισαγωγή GLB', clearDrawing: 'Αφαίρεση σχεδίου',
 
     delete: 'Διαγραφή', floor: 'Όροφος', ground: 'Ισόγειο', upper: 'Α΄ όροφος',
   },
@@ -102,7 +102,7 @@ const DICT = {
     planHint: 'Drag rooms and walls. Changes save automatically.',
     addPlanRoom: 'Room', addPlanWall: 'Wall', showDims: 'Dimensions',
     planEmptyHint: 'Add rooms or import a GLB file to begin.',
-    importGlb: 'Import GLB',
+    importGlb: 'Import GLB', clearDrawing: 'Clear drawing',
 
     delete: 'Delete', floor: 'Floor', ground: 'Ground floor', upper: 'Upper floor',
   },
