@@ -26,6 +26,16 @@ const eur0 = new Intl.NumberFormat('el-GR', { style: 'currency', currency: 'EUR'
 const eur2 = new Intl.NumberFormat('el-GR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 export function money(n, decimals = false) { return (decimals ? eur2 : eur0).format(Number(n) || 0); }
 
+// A styled <select>. options: [{value,label}]. onChange gets the new value.
+export function select(value, options, onChange, cls = 'field') {
+  const el = h('select', { class: cls, onchange: (e) => onChange(e.target.value) });
+  for (const o of options) {
+    el.append(h('option', { value: o.value, selected: String(o.value) === String(value) }, o.label));
+  }
+  el.value = value == null ? '' : value;
+  return el;
+}
+
 // Signed variance label, e.g. +120 € / −80 €
 export function variance(n) {
   const v = Number(n) || 0;
