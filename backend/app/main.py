@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .config import settings
-from .routers import auth
+from .routers import auth, collections, files, meta
 
 app = FastAPI(title="Kampos Hub API")
 
@@ -21,6 +21,11 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+# Explicit routes (meta, files) must be registered before the generic
+# /api/{collection} CRUD catch-all so paths like /api/files and /api/activity win.
+app.include_router(meta.router)
+app.include_router(files.router)
+app.include_router(collections.router)
 
 
 @app.get("/api/health")
