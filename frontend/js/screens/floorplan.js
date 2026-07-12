@@ -6,7 +6,7 @@ import { t } from '../i18n.js';
 import { glbToWalls } from '../glb.js';
 
 // Local (non-persisted) editor UI state. `selected` is a list of {type,id}.
-const ed = { zoom: 1, showDims: false, selected: [], converting: false, floor: 0, savedFlash: false };
+const ed = { zoom: 1, showDims: false, selected: [], converting: false, floor: 0, savedFlash: false, showWalls: true, showFurniture: true };
 const CANVAS_W = 900, CANVAS_H = 620, GRID = 40;
 const onFloor = (el) => (el.floor ?? 0) === ed.floor;
 
@@ -60,6 +60,16 @@ export default function render(root) {
   const rebuild = () => { root.replaceChildren(); build(); };
   bindKeys(rebuild);
 
+  // Drop hidden-kind walls/furniture from the selection when toggled off.
+  const pruneHidden = () => {
+    ed.selected = ed.selected.filter((s) => {
+      if (s.type !== 'plan_walls') return true;
+      const w = coll('plan_walls').find((x) => x.id === s.id);
+      if (!w) return false;
+      return w.kind === 'furniture' ? ed.showFurniture : ed.showWalls;
+    });
+  };
+
   function toolbar() {
     const fileGlb = h('input', { type: 'file', accept: '.glb,.gltf', style: { display: 'none' },
       onchange: async (e) => {
@@ -83,6 +93,8 @@ export default function render(root) {
       h('button', { class: 'btn-ghost', onclick: () => store.create('plan_walls', { x1: 80, y1: 200, x2: 320, y2: 200, kind: 'wall', floor: ed.floor }) }, '／ ' + t('addPlanWall')),
       h('button', { class: 'btn-ghost', onclick: () => store.create('plan_walls', { x1: 120, y1: 320, x2: 260, y2: 320, kind: 'furniture', floor: ed.floor }) }, '🛋 ' + t('addFurniture')),
       h('button', { class: ed.showDims ? 'btn' : 'btn-ghost', style: { borderRadius: '8px' }, onclick: () => { ed.showDims = !ed.showDims; rebuild(); } }, '⟷ ' + t('showDims')),
+      h('button', { class: ed.showWalls ? 'btn' : 'btn-ghost', style: { borderRadius: '8px' }, onclick: () => { ed.showWalls = !ed.showWalls; pruneHidden(); rebuild(); } }, (ed.showWalls ? '👁 ' : '🚫 ') + t('walls')),
+      h('button', { class: ed.showFurniture ? 'btn' : 'btn-ghost', style: { borderRadius: '8px' }, onclick: () => { ed.showFurniture = !ed.showFurniture; pruneHidden(); rebuild(); } }, (ed.showFurniture ? '👁 ' : '🚫 ') + t('furniture')),
       h('div', { style: { display: 'flex', gap: '2px' } },
         h('button', { class: 'btn-ghost', onclick: () => { ed.zoom = Math.max(0.4, ed.zoom - 0.1); rebuild(); } }, '−'),
         h('button', { class: 'btn-ghost', onclick: () => { ed.zoom = Math.min(2.5, ed.zoom + 0.1); rebuild(); } }, '+')),
@@ -149,6 +161,7 @@ export default function render(root) {
     // walls + furniture
     for (const wl of walls) {
       const furn = wl.kind === 'furniture';
+      if (furn ? !ed.showFurniture : !ed.showWalls) continue; // visibility toggle
       const sel = isSel('plan_walls', wl.id);
       const gEl = svgEl('g', {});
       const stroke = sel ? 'var(--teal)' : (furn ? '#a9895f' : '#4f483d');
