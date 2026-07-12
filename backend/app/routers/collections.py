@@ -27,6 +27,7 @@ def snapshot(db: Session = Depends(get_db)):
             "total_budget": float(setting.total_budget) if setting else 0,
             "project_start": setting.project_start if setting else None,
             "project_end": setting.project_end if setting else None,
+            "plan_scale": float(setting.plan_scale) if setting and setting.plan_scale is not None else 50,
         },
         "activity": [
             {"id": a.id, "ts": a.ts, "el": a.text_el, "en": a.text_en} for a in activity
@@ -35,6 +36,12 @@ def snapshot(db: Session = Depends(get_db)):
     for name in crud.REGISTRY:
         out[name] = crud.list_all(db, name)
     return out
+
+
+@router.post("/{collection}/bulk")
+def bulk_create_items(collection: str, items: list[dict] = Body(...), db: Session = Depends(get_db)):
+    _check(collection)
+    return crud.bulk_create(db, collection, items)
 
 
 @router.post("/{collection}")

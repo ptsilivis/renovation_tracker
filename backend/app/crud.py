@@ -95,6 +95,21 @@ def create(db: Session, collection: str, body: dict) -> dict:
     return serialize(collection, row)
 
 
+def bulk_create(db: Session, collection: str, items: list[dict]) -> list[dict]:
+    model = REGISTRY[collection]
+    rows = []
+    for body in items:
+        rid = body.get("id") or new_id(collection)
+        if collection in _JSON_COLLECTIONS:
+            rows.append(model(id=rid, data={k: v for k, v in body.items() if k != "id"}))
+        else:
+            allowed = set(_cols(model))
+            rows.append(model(id=rid, **{k: v for k, v in body.items() if k in allowed and k != "id"}))
+    db.add_all(rows)
+    db.commit()
+    return [serialize(collection, r) for r in rows]
+
+
 def update(db: Session, collection: str, rid: str, patch: dict) -> dict | None:
     model = REGISTRY[collection]
     row = db.get(model, rid)

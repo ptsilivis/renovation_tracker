@@ -18,6 +18,7 @@ def _settings_out(s: Setting | None) -> dict:
         "total_budget": float(s.total_budget) if s else 0,
         "project_start": s.project_start if s else None,
         "project_end": s.project_end if s else None,
+        "plan_scale": float(s.plan_scale) if s and s.plan_scale is not None else 50,
     }
 
 
@@ -38,6 +39,8 @@ def patch_settings(patch: dict = Body(...), db: Session = Depends(get_db)):
         s.project_start = patch["project_start"] or None
     if "project_end" in patch:
         s.project_end = patch["project_end"] or None
+    if "plan_scale" in patch and patch["plan_scale"]:
+        s.plan_scale = patch["plan_scale"]
     db.commit()
     return _settings_out(s)
 

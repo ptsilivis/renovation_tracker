@@ -168,7 +168,7 @@ def seed_all(db: Session, reset: bool = False) -> None:
         db.commit()
 
     if db.query(Category).count() == 0:
-        db.add(Setting(id="app", total_budget=50000, project_start="2026-10", project_end="2028-05"))
+        db.add(Setting(id="app", total_budget=50000, project_start="2026-10", project_end="2028-05", plan_scale=50))
         for cid, el, en, order in CATEGORIES:
             db.add(Category(id=cid, name_el=el, name_en=en, sort_order=order))
         for rid, name, floor in ROOMS:

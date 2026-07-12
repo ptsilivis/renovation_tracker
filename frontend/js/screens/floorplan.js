@@ -3,7 +3,7 @@ import { coll } from '../state.js';
 import * as store from '../state.js';
 import { api } from '../api.js';
 import { t } from '../i18n.js';
-import { glbToPlan } from '../glb.js';
+import { glbToWalls } from '../glb.js';
 
 // Local (non-persisted) editor UI state.
 const ed = { zoom: 1, showDims: false, sel: null, converting: false };
@@ -40,10 +40,13 @@ export default function render(root) {
         ed.converting = true; rebuild();
         try {
           const r = await api.upload(f);
-          const { segments } = await glbToPlan(r.url, CANVAS_W, CANVAS_H);
+          const { walls, scale } = await glbToWalls(r.url, CANVAS_W, CANVAS_H);
           ed.converting = false;
-          if (!segments.length) { rebuild(); return; }
-          await store.create('plan_underlays', { kind: 'drawing', file: r.name, segments });
+          if (!walls.length) { rebuild(); return; }
+          await store.mutate(async () => {
+            if (scale) await api.patchSettings({ plan_scale: Math.round(scale * 100) / 100 }); // real measurements from the fit
+            await api.bulkCreate('plan_walls', walls);
+          });
         } catch (err) {
           ed.converting = false;
           console.error('GLB convert failed', err);
@@ -60,14 +63,18 @@ export default function render(root) {
         h('button', { class: 'btn-ghost', onclick: () => { ed.zoom = Math.max(0.4, ed.zoom - 0.1); rebuild(); } }, '−'),
         h('button', { class: 'btn-ghost', onclick: () => { ed.zoom = Math.min(2.5, ed.zoom + 0.1); rebuild(); } }, '+')),
       h('label', { class: 'btn-dashed' }, (ed.converting ? '… ' : '⤒ ') + t('importGlb'), fileGlb),
-      h('label', { class: 'btn-dashed' }, '🖼', fileImg));
+      h('label', { class: 'btn-dashed' }, '🖼', fileImg),
+      h('label', { class: 'hint', style: { display: 'flex', gap: '4px', alignItems: 'center' } }, t('scale'),
+        h('input', { type: 'number', min: '5', step: '5', value: store.settings().plan_scale || 50, class: 'field', style: { width: '66px', padding: '5px 8px', fontSize: '12px' }, title: t('scaleHint'),
+          onchange: (e) => { const v = Number(e.target.value); if (v >= 5) store.patchSettings({ plan_scale: v }); } }), 'px/m'));
   }
 
   function build() {
     const rooms = coll('plan_rooms');
     const walls = coll('plan_walls');
     const underlay = coll('plan_underlays').find((u) => u.kind === 'image');
-    const drawing = coll('plan_underlays').find((u) => u.kind === 'drawing');
+    const scale = store.settings().plan_scale || 50;      // px per metre
+    const metres = (px) => (px / scale).toFixed(2) + ' m';
 
     const svg = svgEl('svg', { class: 'plan-svg', viewBox: `0 0 ${CANVAS_W} ${CANVAS_H}`, onmousedown: () => { ed.sel = null; rebuild(); } });
     const g = svgEl('g', { transform: `scale(${ed.zoom})` });
@@ -78,13 +85,6 @@ export default function render(root) {
     for (let y = 0; y <= CANVAS_H; y += GRID) g.append(svgEl('line', { x1: 0, y1: y, x2: CANVAS_W, y2: y, stroke: '#eef2f3', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }));
 
     if (underlay) g.append(svgEl('image', { href: '/files/' + underlay.file, x: 0, y: 0, width: underlay.w || CANVAS_W, height: underlay.h || CANVAS_H, opacity: underlay.opacity ?? 0.6, preserveAspectRatio: 'none', style: { pointerEvents: 'none' } }));
-
-    // 2D plan projected from an imported GLB (non-interactive backdrop lines).
-    if (drawing && Array.isArray(drawing.segments)) {
-      const dg = svgEl('g', { style: { pointerEvents: 'none' } });
-      for (const s of drawing.segments) dg.append(svgEl('line', { x1: s[0], y1: s[1], x2: s[2], y2: s[3], stroke: '#35606e', 'stroke-width': 1.3, 'vector-effect': 'non-scaling-stroke', 'stroke-linecap': 'round' }));
-      g.append(dg);
-    }
 
     // rooms
     for (const rm of rooms) {
@@ -98,7 +98,7 @@ export default function render(root) {
       });
       g.append(rect);
       g.append(svgEl('text', { x: rm.x + rm.w / 2, y: rm.y + rm.h / 2, 'text-anchor': 'middle', fill: '#35606e', 'font-weight': 700, 'font-size': 13, style: { pointerEvents: 'none' } }, rm.name || ''));
-      if (ed.showDims) g.append(svgEl('text', { x: rm.x + rm.w / 2, y: rm.y + rm.h / 2 + 16, 'text-anchor': 'middle', fill: 'var(--muted2)', 'font-size': 10, style: { pointerEvents: 'none' } }, `${Math.round(rm.w)}×${Math.round(rm.h)}`));
+      if (ed.showDims) g.append(svgEl('text', { x: rm.x + rm.w / 2, y: rm.y + rm.h / 2 + 16, 'text-anchor': 'middle', fill: 'var(--muted2)', 'font-size': 10, style: { pointerEvents: 'none' } }, `${metres(rm.w)} × ${metres(rm.h)}`));
       if (selected) {
         const hd = svgEl('rect', { x: rm.x + rm.w - 6, y: rm.y + rm.h - 6, width: 12, height: 12, fill: 'var(--teal)', style: { cursor: 'nwse-resize' } });
         hd.addEventListener('mousedown', (e) => { e.stopPropagation(); const ow = rm.w, oh = rm.h;
@@ -118,8 +118,8 @@ export default function render(root) {
           () => store.update('plan_walls', wl.id, { x1: +line.getAttribute('x1'), y1: +line.getAttribute('y1'), x2: +line.getAttribute('x2'), y2: +line.getAttribute('y2') })); });
       g.append(line);
       if (ed.showDims) {
-        const len = Math.round(Math.hypot(wl.x2 - wl.x1, wl.y2 - wl.y1));
-        g.append(svgEl('text', { x: (wl.x1 + wl.x2) / 2, y: (wl.y1 + wl.y2) / 2 - 8, 'text-anchor': 'middle', fill: '#4f483d', 'font-size': 10, style: { pointerEvents: 'none' } }, len + ''));
+        const len = Math.hypot(wl.x2 - wl.x1, wl.y2 - wl.y1);
+        g.append(svgEl('text', { x: (wl.x1 + wl.x2) / 2, y: (wl.y1 + wl.y2) / 2 - 8, 'text-anchor': 'middle', fill: '#4f483d', 'font-size': 10, style: { pointerEvents: 'none' } }, metres(len)));
       }
       if (selected) {
         for (const [ex, ey, k1, k2] of [[wl.x1, wl.y1, 'x1', 'y1'], [wl.x2, wl.y2, 'x2', 'y2']]) {
@@ -133,14 +133,35 @@ export default function render(root) {
     }
 
     const canvasCard = h('div', { class: 'card', style: { overflow: 'hidden', position: 'relative' } }, toolbar(), svg);
-    if (!rooms.length && !walls.length && !underlay && !drawing) {
+    if (!rooms.length && !walls.length && !underlay) {
       canvasCard.append(h('div', { class: 'hint', style: { position: 'absolute', left: 0, right: 0, top: '55%', textAlign: 'center', padding: '0 40px' } }, t('planEmptyHint')));
     }
 
     // selected element actions (delete) + underlay opacity
+    const dimInput = (val, onSet) => h('input', { type: 'number', step: '0.05', min: '0.1', value: val,
+      class: 'field', style: { width: '70px', padding: '5px 8px', fontSize: '12px' },
+      onchange: (e) => { const m = Number(e.target.value); if (m > 0) onSet(m); } });
+
     const sideBits = [];
+    // Precise measurement entry for the selected element (metres → pixels).
+    if (ed.sel && ed.sel.type === 'plan_walls') {
+      const w = coll('plan_walls').find((x) => x.id === ed.sel.id);
+      if (w) {
+        const L = Math.hypot(w.x2 - w.x1, w.y2 - w.y1) || 1;
+        sideBits.push(h('label', { class: 'hint', style: { display: 'flex', gap: '4px', alignItems: 'center' } }, t('length'),
+          dimInput((L / scale).toFixed(2), (m) => {
+            const ux = (w.x2 - w.x1) / L, uy = (w.y2 - w.y1) / L, npx = m * scale;
+            store.update('plan_walls', w.id, { x2: Math.round(w.x1 + ux * npx), y2: Math.round(w.y1 + uy * npx) });
+          }), 'm'));
+      }
+    }
+    if (ed.sel && ed.sel.type === 'plan_rooms') {
+      const rm = coll('plan_rooms').find((x) => x.id === ed.sel.id);
+      if (rm) sideBits.push(h('label', { class: 'hint', style: { display: 'flex', gap: '4px', alignItems: 'center' } },
+        dimInput((rm.w / scale).toFixed(2), (m) => store.update('plan_rooms', rm.id, { w: Math.round(m * scale) })), '×',
+        dimInput((rm.h / scale).toFixed(2), (m) => store.update('plan_rooms', rm.id, { h: Math.round(m * scale) })), 'm'));
+    }
     if (ed.sel) sideBits.push(h('button', { class: 'btn-ghost', onclick: () => { store.remove(ed.sel.type, ed.sel.id); ed.sel = null; } }, t('delete')));
-    if (drawing) sideBits.push(h('button', { class: 'btn-ghost', onclick: () => store.remove('plan_underlays', drawing.id) }, t('clearDrawing')));
     if (underlay) sideBits.push(h('label', { class: 'hint', style: { display: 'flex', gap: '6px', alignItems: 'center' } }, t('showDims'),
       h('input', { type: 'range', min: 0.1, max: 1, step: 0.05, value: underlay.opacity ?? 0.6, style: { accentColor: 'var(--teal)' }, onchange: (e) => store.update('plan_underlays', underlay.id, { opacity: Number(e.target.value) }) }),
       h('button', { class: 'del-btn', onclick: () => store.remove('plan_underlays', underlay.id) }, '×')));

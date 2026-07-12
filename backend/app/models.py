@@ -34,6 +34,7 @@ class Setting(Base):
     total_budget: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
     project_start: Mapped[str | None] = mapped_column(CHAR(7), nullable=True)  # YYYY-MM
     project_end: Mapped[str | None] = mapped_column(CHAR(7), nullable=True)
+    plan_scale: Mapped[float] = mapped_column(Numeric(8, 2), default=50)  # floor-plan px per meter
 
 
 class Category(Base):
