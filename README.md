@@ -12,7 +12,9 @@ realistic data.
 ## Features
 
 - **Projects** — a first-screen picker to choose, create, rename, or delete a
-  renovation. Each project has its own budget, timeline, and data.
+  renovation. Each project has its own budget, timeline, and data. New projects are
+  **scaffolded** with default categories, a phase timeline, and starter tasks, plus a
+  "getting started" checklist.
 - **Overview** — budget/spent/remaining/progress cards, phase Gantt timeline,
   planned-vs-actual chart, next tasks, activity feed.
 - **Tasks** — category-grouped, editable table with status/priority/dependency/
@@ -23,7 +25,9 @@ realistic data.
 - **Floor Plan** — SVG room/wall editor with dimensions, zoom, image underlay,
   and GLB 3D model import.
 - **Measurements** — rooms & surfaces with cm dimensions, JSON export.
-- Bilingual **Greek / English**, shared admin accounts, all data shared per project.
+- **Accounts** — no public signup; accounts are seeded from `SEED_USERS` and each
+  user is **forced to set their own password on first login** (self-service change
+  any time). Bilingual **Greek / English**, all data shared per project.
 
 ## Stack
 
@@ -59,13 +63,26 @@ prints the emails and password), and pick a project.
 ```
 backend/    FastAPI app, models, routers, Alembic migrations, seed
 frontend/   vanilla-JS SPA (index.html, css, js/screens)
-deploy/     systemd unit, Cloudflare Tunnel guide, DEPLOY.md
+deploy/     systemd unit, Cloudflare Tunnel guide, update.sh, backup.sh, DEPLOY.md
 doc/prds/   product requirements
 ```
+
+## Deploy & operate
+
+Full walkthrough in [`deploy/DEPLOY.md`](deploy/DEPLOY.md): a Raspberry Pi behind a
+Cloudflare Tunnel, gated by Cloudflare Access (email allow-list), with key-only SSH.
+Day-to-day:
+
+- **Update:** `./deploy/update.sh` — pull, run migrations, restart, health-check.
+- **Backups:** `./deploy/backup.sh` — nightly (cron) DB dump + uploads archive with
+  retention; pull copies off-device.
+
+Real accounts and secrets live in the gitignored `backend/.env` (`SEED_USERS`,
+`SEED_PASSWORD`, `JWT_SECRET`, DB creds) — never edit tracked files on the host.
 
 ## Notes
 
 - The database, uploaded files (`backend/uploads/`), and your `.env` are **not**
   tracked — see `.gitignore`. Nothing personal or secret is committed.
-- The seed accounts and passwords are placeholders. Change `SEED_PASSWORD` and the
-  account emails in `backend/app/seed.py` before any real deployment.
+- No public signup. Set `SEED_USERS` + `SEED_PASSWORD` in `.env`; each account must
+  set its own password on first login.

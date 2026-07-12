@@ -1,14 +1,19 @@
 # Deploying RenovationHub on a Raspberry Pi
 
 Target: a Raspberry Pi (ARM64, Raspberry Pi OS / Debian) running PostgreSQL, the
-FastAPI app under systemd, and a Cloudflare Tunnel for free HTTPS remote access.
-Your users reach it at your tunnel URL; no port-forwarding.
+FastAPI app under systemd, and a **Cloudflare Tunnel** for free HTTPS remote access
+gated by **Cloudflare Access**. Users reach it at a private hostname; no
+port-forwarding, nothing exposed on your router.
+
+> **Golden rule:** the Pi is a *clean deploy target*. Never edit tracked files on
+> it — all host-specific values (emails, secrets, DB creds, paths) live in the
+> gitignored `backend/.env`. That keeps `git pull` conflict-free forever.
 
 ## 1. System packages
 
 ```bash
 sudo apt update
-sudo apt install -y python3-venv python3-dev postgresql build-essential
+sudo apt install -y python3-venv python3-dev postgresql build-essential git
 ```
 
 ## 2. PostgreSQL
@@ -23,78 +28,101 @@ SQL
 ## 3. Get the code + Python env
 
 ```bash
-cd /home/pi
-git clone <your-repo-url> renovation_tracker   # or copy the folder over
+cd ~
+git clone https://github.com/<you>/renovation_tracker.git
 cd renovation_tracker/backend
 python3 -m venv .venv
 ./.venv/bin/pip install -r requirements.txt
 ```
 
-## 4. Configure
+## 4. Configure (`backend/.env`)
 
 ```bash
 cp .env.example .env
-# Edit .env:
-#   DATABASE_URL=postgresql+psycopg://renovation:CHANGE_ME_STRONG@localhost:5432/renovation
-#   JWT_SECRET=$(python3 -c "import secrets;print(secrets.token_urlsafe(48))")
-#   COOKIE_SECURE=true          # Cloudflare Tunnel serves HTTPS
-#   UPLOAD_DIR=/home/pi/renovation_tracker/uploads
-#   SEED_PASSWORD=<initial password for the seeded accounts>
+nano .env
+```
+Set:
+```
+DATABASE_URL=postgresql+psycopg://renovation:CHANGE_ME_STRONG@localhost:5432/renovation
+JWT_SECRET=<python3 -c "import secrets;print(secrets.token_urlsafe(48))">
+COOKIE_SECURE=true                 # Cloudflare Tunnel serves HTTPS
+UPLOAD_DIR=/home/<you>/renovation_tracker/uploads
+SEED_PASSWORD=<initial login password for all accounts>
+# Real accounts go HERE, not in seed.py (this file is gitignored):
+SEED_USERS=alice@example.com:Alice, bob@example.com:Bob
 ```
 
 ## 5. Migrate + seed
 
 ```bash
-cd /home/pi/renovation_tracker/backend
 ./.venv/bin/alembic upgrade head
-./.venv/bin/python -m app.seed        # creates admin accounts + a sample project
+./.venv/bin/python -m app.seed        # sample "Kampos" project + accounts from SEED_USERS
 ```
-
-The seed creates the sample "Kampos" project and a set of admin accounts. Edit the
-account emails in `app/seed.py` before seeding (or update them in the DB
-afterwards). Everyone logs in with `SEED_PASSWORD` — change it after first login.
+Accounts are created from `SEED_USERS` (never overwriting existing ones). Every
+seeded account starts on `SEED_PASSWORD` and is **forced to set its own password on
+first login** — you never learn anyone else's password. To move an existing
+single-database over instead of seeding, restore a `pg_dump` here.
 
 ## 6. Run under systemd
 
+Edit `deploy/renovation-api.service` so `User=` and the paths match your account,
+then:
 ```bash
 sudo cp deploy/renovation-api.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now renovation-api
-systemctl status renovation-api        # should be active (running) on 127.0.0.1:8000
 curl -s localhost:8000/api/health      # {"ok":true}
 ```
+The app serves both the API and the static frontend, so port 8000 is the whole site
+(bound to 127.0.0.1 — only the tunnel reaches it).
 
-The app serves both the API and the static frontend, so port 8000 is the whole site.
+## 7. Cloudflare Tunnel + Access
 
-## 7. Cloudflare Tunnel (HTTPS)
+See `cloudflared-README.md` for detail. Summary:
+1. **Zero Trust dashboard → Networks → Tunnels → Create tunnel** (Cloudflared
+   connector). Run the printed `sudo cloudflared service install <token>` on the Pi
+   — it installs cloudflared as an always-on service.
+2. **Published application routes**: add `renohub.<yourdomain>` → `HTTP localhost:8000`.
+3. **Access → Applications → Add → Public DNS**: name it, session ~1 month, then a
+   policy **Allow → Include → Emails** with your users' addresses, login method
+   **One-time PIN** (or Google for one-tap + biometric). This is what makes the
+   hostname private — only those emails get past the gate.
+4. Optional edge hardening (free): **Bot Fight Mode** on, plus a **rate-limiting
+   rule** scoped to the hostname.
 
-See `cloudflared-README.md`. In short:
+Quick throwaway URL for testing without a domain (public, no Access):
+`cloudflared tunnel --url http://localhost:8000`.
 
+## 8. Backups (do this)
+
+`deploy/backup.sh` dumps the DB (gzip) + archives `UPLOAD_DIR`, keeping the last 14
+days (`RENOHUB_BACKUP_RETENTION`). Schedule it and pull copies **off the Pi** so an
+SD-card failure can't lose everything:
 ```bash
-cloudflared tunnel login
-cloudflared tunnel create renovation
-# route renovation.<yourdomain> -> http://localhost:8000, then:
-sudo cloudflared service install
+mkdir -p ~/backups
+crontab -e
+# nightly at 03:00:
+0 3 * * * cd ~/renovation_tracker && ./deploy/backup.sh >> ~/backups/backup.log 2>&1
 ```
+From another machine, periodically `rsync -avz <pi>:backups/ ~/renohub-backups/`.
+Restore with `gunzip -c db_DATE.sql.gz | psql -U renovation -d renovation -h localhost`
+and untar the uploads archive back into place.
 
-Or, for a quick throwaway URL with no domain:
+## 9. Harden SSH (recommended)
 
+Set up key auth (`ssh-copy-id <pi>` from your workstation, verify it works), then
+disable passwords via a drop-in read first so it wins over cloud-init defaults:
 ```bash
-cloudflared tunnel --url http://localhost:8000
+printf 'PasswordAuthentication no\nKbdInteractiveAuthentication no\n' | \
+  sudo tee /etc/ssh/sshd_config.d/00-hardening.conf
+sudo sshd -t && sudo systemctl restart ssh
+sudo sshd -T | grep -iE 'passwordauthentication|kbdinteractive'   # both should be "no"
 ```
-
-## 8. Backups
-
-```bash
-pg_dump -U renovation renovation > renovation-$(date +%F).sql   # database
-tar czf uploads-$(date +%F).tgz uploads/                        # uploaded files
-```
+Verify key login still works **before** closing your session. Consider `fail2ban`.
 
 ## Updating
 
+One command — pull, migrate, restart, health-check:
 ```bash
-cd /home/pi/renovation_tracker && git pull
-cd backend && ./.venv/bin/pip install -r requirements.txt
-./.venv/bin/alembic upgrade head
-sudo systemctl restart renovation-api
+cd ~/renovation_tracker && ./deploy/update.sh
 ```
