@@ -52,6 +52,7 @@ const DICT = {
 
     // floor plan
     planHint: 'Σύρετε δωμάτια και τοίχους. Οι αλλαγές αποθηκεύονται αυτόματα.',
+    multiSelectHint: 'Shift+κλικ ή σύρσιμο για πολλαπλή επιλογή · Delete για διαγραφή',
     addPlanRoom: 'Δωμάτιο', addPlanWall: 'Τοίχος', addFurniture: 'Έπιπλο', showDims: 'Διαστάσεις',
     save: 'Αποθήκευση', saved: 'Αποθηκεύτηκε', saveHint: 'Οι αλλαγές αποθηκεύονται αυτόματα · συγχρονισμός',
     clearFloor: 'Καθαρισμός ορόφου', confirmClearFloor: 'Διαγραφή όλων των στοιχείων αυτού του ορόφου;',
@@ -102,6 +103,7 @@ const DICT = {
     colLabel: 'Label', colType: 'Type', colWidth: 'Width (cm)', colHeight: 'Height (cm)',
 
     planHint: 'Drag rooms and walls. Changes save automatically.',
+    multiSelectHint: 'Shift+click or drag to multi-select · Delete to remove',
     addPlanRoom: 'Room', addPlanWall: 'Wall', addFurniture: 'Furniture', showDims: 'Dimensions',
     save: 'Save', saved: 'Saved', saveHint: 'Changes save automatically · sync now',
     clearFloor: 'Clear floor', confirmClearFloor: 'Delete everything on this floor?',
