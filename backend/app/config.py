@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     upload_dir: str = "./uploads"
     max_upload_mb: int = 50
     seed_password: str = "kampos2026"
+    # Comma-separated accounts to seed: "email:Name, email2:Name2". Keep real
+    # emails here (in .env), not in seed.py. Empty → a generic demo admin.
+    seed_users: str = ""
 
     @property
     def upload_path(self) -> Path:

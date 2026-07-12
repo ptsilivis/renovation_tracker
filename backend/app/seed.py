@@ -3,6 +3,8 @@
 Run as a module:  python -m app.seed
 Idempotent: skips seeding if data already present unless reset=True.
 """
+import hashlib
+
 from sqlalchemy.orm import Session
 
 from .auth import hash_password
@@ -152,13 +154,29 @@ ACTIVITY = [
     (1750006800000, "Παραγγελία: Ξύλινα παράθυρα (6 τεμ.) — Ξυλουργείο Καλαμάτας", "Ordered: Wooden windows (6) — Kalamata joinery"),
 ]
 
-# The 4 family accounts (all admin). CHANGE the placeholder emails after setup.
-USERS = [
-    ("u_panos", "p.tsilivis10@gmail.com", "Πάνος"),
-    ("u_member2", "member2@kampos.gr", "Μέλος 2"),
-    ("u_member3", "member3@kampos.gr", "Μέλος 3"),
-    ("u_member4", "member4@kampos.gr", "Μέλος 4"),
+# Accounts to seed (all admin). Real deployments set SEED_USERS in .env — keep
+# personal emails OUT of version control. Format:
+#   SEED_USERS="alice@example.com:Alice, bob@example.com:Bob"
+# If SEED_USERS is empty, the generic demo account below is used.
+DEFAULT_USERS = [
+    ("u_admin", "admin@example.com", "Admin"),
 ]
+
+
+def resolve_users() -> list[tuple[str, str, str]]:
+    """(id, email, name) tuples from SEED_USERS, else the demo default."""
+    out = []
+    for part in (cfg.seed_users or "").split(","):
+        part = part.strip()
+        if not part:
+            continue
+        email, _, name = part.partition(":")
+        email = email.strip().lower()
+        if not email:
+            continue
+        uid = "u_" + hashlib.md5(email.encode()).hexdigest()[:10]
+        out.append((uid, email, name.strip() or email.split("@")[0]))
+    return out or DEFAULT_USERS
 
 # Deleted parent-last so foreign keys unwind cleanly (Project cascades anyway).
 _DATA_TABLES = [
@@ -210,7 +228,7 @@ def seed_all(db: Session, reset: bool = False) -> None:
 
     # Users (create any missing; never overwrite an existing password). New
     # accounts start on the shared seed password and must change it on first login.
-    for uid, email, name in USERS:
+    for uid, email, name in resolve_users():
         if not db.query(User).filter(User.email == email).first():
             db.add(User(id=uid, email=email.lower(),
                         password_hash=hash_password(cfg.seed_password),
@@ -224,7 +242,7 @@ def main() -> None:
     try:
         seed_all(db)
         print("Seed complete. Users:")
-        for _, email, _ in USERS:
+        for _, email, _ in resolve_users():
             print(f"  {email}  (password: {cfg.seed_password})")
     finally:
         db.close()
