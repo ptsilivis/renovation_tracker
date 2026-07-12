@@ -208,12 +208,13 @@ def seed_all(db: Session, reset: bool = False) -> None:
             db.add(Activity(id=new_id("activity"), project_id=P, ts=ts, text_el=el, text_en=en))
         db.commit()
 
-    # Users (create any missing; never overwrite an existing password).
+    # Users (create any missing; never overwrite an existing password). New
+    # accounts start on the shared seed password and must change it on first login.
     for uid, email, name in USERS:
         if not db.query(User).filter(User.email == email).first():
             db.add(User(id=uid, email=email.lower(),
                         password_hash=hash_password(cfg.seed_password),
-                        display_name=name, role="admin"))
+                        display_name=name, role="admin", must_change_password=True))
     db.commit()
 
 

@@ -323,5 +323,15 @@ main.main > section { animation: kh-fade var(--dur-2) var(--ease) both; }
   animation: kh-rise 200ms var(--ease) both;
 }
 .modal h2 { margin: 0 0 4px; font-size: 20px; }
+.modal-msg { font-size: 12.5px; margin-bottom: 4px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
 .pw-ok { padding: 12px 4px; color: var(--ok); font-weight: 600; }
+
+/* ---- getting-started onboarding banner ---- */
+.onboard { border-left: 3px solid var(--teal); margin-bottom: 16px; }
+.onboard-intro { font-size: 12.5px; margin: 6px 0 10px; }
+.onboard-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.onboard-list li { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.onboard-list li.done { color: var(--muted); text-decoration: line-through; }
+.onboard-check { display: inline-flex; width: 18px; justify-content: center; color: var(--teal); font-weight: 700; }
+.onboard-list li.done .onboard-check { color: var(--ok); }

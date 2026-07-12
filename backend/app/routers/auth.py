@@ -47,6 +47,7 @@ def change_password(
     if new == body.current_password:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "new password must be different")
     user.password_hash = hash_password(new)
+    user.must_change_password = False
     db.commit()
     # Re-issue the session so the current device stays logged in.
     set_auth_cookie(response, create_token(user.id))

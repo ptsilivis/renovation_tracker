@@ -107,12 +107,38 @@ function recentActivity() {
       h('span', { style: { fontSize: '12.5px', color: '#4f483d' } }, localName({ name_el: a.el, name_en: a.en }))))));
 }
 
+// A dismissible "getting started" checklist, shown on a fresh project until the
+// budget is set (or the user dismisses it). Nudges the key first steps.
+function gettingStarted() {
+  const s = store.settings();
+  const key = 'rh_onboard_' + store.state.projectId;
+  if (localStorage.getItem(key) === '1' || Number(s.total_budget) > 0) return null;
+
+  const items = [
+    { done: Number(s.total_budget) > 0, text: t('obSetBudget') },
+    { done: !!s.project_start, text: t('obSetTimeline') },
+    { done: coll('cost_items').some((c) => Number(c.planned_cost) > 0 || Number(c.actual_cost) > 0), text: t('obAddCosts') },
+  ];
+  const dismiss = h('button', { class: 'icon-btn', title: t('obDismiss'),
+    onclick: () => { localStorage.setItem(key, '1'); store.rerender(); } }, '✕');
+
+  return h('div', { class: 'card card-pad onboard' },
+    h('div', { class: 'row-between' },
+      h('h2', { style: { margin: 0, fontSize: '15px' } }, t('obTitle')), dismiss),
+    h('div', { class: 'onboard-intro muted' }, t('obIntro')),
+    h('ul', { class: 'onboard-list' }, items.map((it) =>
+      h('li', { class: it.done ? 'done' : '' },
+        h('span', { class: 'onboard-check' }, it.done ? '✓' : '○'), it.text))),
+  );
+}
+
 export default function render(root) {
   const { budget, spent, remaining } = budgetStats();
   const prog = taskProgress();
   const spentPct = budget ? spent / budget * 100 : 0;
 
   root.append(h('section', { class: 'section' },
+    gettingStarted(),
     h('div', { class: 'stat-grid' },
       budgetCard(budget),
       statCard(t('statSpent'), money(spent), Math.round(spentPct) + '%', spentPct, spentPct > 100 ? 'var(--accent)' : 'var(--teal)', spentPct > 100 ? 'var(--accent)' : undefined),

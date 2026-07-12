@@ -75,15 +75,18 @@ function renderHeader() {
 }
 
 // Change-password modal — every user sets their own strong password (min 10).
-function openPasswordModal() {
+// `forced` (first-login) hides Cancel and can't be dismissed until it succeeds.
+function openPasswordModal(forced = false) {
   const err = h('div', { class: 'login-err' });
   const cur = h('input', { class: 'field', type: 'password', placeholder: t('currentPassword'), autocomplete: 'current-password' });
   const np = h('input', { class: 'field', type: 'password', placeholder: t('newPassword'), autocomplete: 'new-password' });
   const cp = h('input', { class: 'field', type: 'password', placeholder: t('confirmPassword'), autocomplete: 'new-password' });
   const overlay = h('div', { class: 'modal-overlay' });
   const close = () => overlay.remove();
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-  document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); } });
+  if (!forced) {
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); } });
+  }
 
   const btn = h('button', { class: 'btn', type: 'submit' }, t('save'));
   const submit = async (e) => {
@@ -95,20 +98,24 @@ function openPasswordModal() {
     try {
       await api.changePassword(cur.value, np.value);
       form.replaceChildren(h('div', { class: 'pw-ok' }, '✓ ' + t('pwChanged')));
-      setTimeout(close, 1400);
+      setTimeout(() => {
+        if (forced) { state.user.must_change_password = false; renderApp(); }
+        else close();
+      }, 1400);
     } catch (ex) {
       err.textContent = (ex && ex.message) || t('pwSaveErr');
       btn.disabled = false;
     }
   };
   const form = h('form', { class: 'card card-pad modal', onsubmit: submit },
-    h('h2', {}, t('changePassword')),
+    h('h2', {}, forced ? t('mustChangeTitle') : t('changePassword')),
+    forced ? h('div', { class: 'modal-msg muted' }, t('mustChangeMsg')) : null,
     h('label', { class: 'stat-label' }, t('currentPassword')), cur,
     h('label', { class: 'stat-label' }, t('newPassword')), np,
     h('label', { class: 'stat-label' }, t('confirmPassword')), cp,
     err,
     h('div', { class: 'modal-actions' },
-      h('button', { class: 'btn-ghost', type: 'button', onclick: close }, t('cancel')),
+      forced ? null : h('button', { class: 'btn-ghost', type: 'button', onclick: close }, t('cancel')),
       btn,
     ),
   );
@@ -119,6 +126,10 @@ function openPasswordModal() {
 
 function renderApp() {
   if (!state.user) return renderLogin();
+  if (state.user.must_change_password) {   // first login: must set own password before anything
+    clear(appEl);
+    return openPasswordModal(true);
+  }
   if (!state.projectId) return renderPicker(appEl);
   const main = h('main', { class: 'main' });
   clear(appEl).append(renderHeader(), main);

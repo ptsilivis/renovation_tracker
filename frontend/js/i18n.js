@@ -23,6 +23,15 @@ const DICT = {
     pwTooShort: 'Ο κωδικός πρέπει να έχει τουλάχιστον 10 χαρακτήρες.',
     pwMismatch: 'Οι κωδικοί δεν ταιριάζουν.', pwChanged: 'Ο κωδικός άλλαξε.',
     pwSaveErr: 'Αποτυχία αλλαγής κωδικού.',
+    mustChangeTitle: 'Ορίστε νέο κωδικό',
+    mustChangeMsg: 'Για ασφάλεια, αλλάξτε τον προσωρινό κωδικό πριν συνεχίσετε.',
+
+    // onboarding
+    obTitle: 'Ξεκινήστε εδώ', obDismiss: 'Απόκρυψη',
+    obIntro: 'Το έργο δημιουργήθηκε με προεπιλεγμένες κατηγορίες και εργασίες. Συμπληρώστε τα βασικά:',
+    obSetBudget: 'Ορίστε τον προϋπολογισμό (κάντε κλικ στην κάρτα «Προϋπολογισμός»)',
+    obSetTimeline: 'Ρυθμίστε το χρονοδιάγραμμα φάσεων',
+    obAddCosts: 'Προσθέστε τις πρώτες δαπάνες στην καρτέλα «Κόστη»',
 
     // overview
     statBudget: 'Προϋπολογισμός', statSpent: 'Δαπανήθηκε', statRemaining: 'Υπόλοιπο',
@@ -92,6 +101,15 @@ const DICT = {
     pwTooShort: 'Password must be at least 10 characters.',
     pwMismatch: 'Passwords do not match.', pwChanged: 'Password changed.',
     pwSaveErr: 'Could not change password.',
+    mustChangeTitle: 'Set a new password',
+    mustChangeMsg: 'For security, change your temporary password before continuing.',
+
+    // onboarding
+    obTitle: 'Getting started', obDismiss: 'Dismiss',
+    obIntro: 'Your project was created with default categories and tasks. Fill in the essentials:',
+    obSetBudget: 'Set your budget (click the “Budget” card)',
+    obSetTimeline: 'Set the phase timeline',
+    obAddCosts: 'Add your first costs on the “Costs” tab',
 
     statBudget: 'Budget', statSpent: 'Spent', statRemaining: 'Remaining',
     statProgress: 'Task progress', editHint: 'Click to edit',

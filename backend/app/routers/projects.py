@@ -13,6 +13,7 @@ from ..crud import new_id
 from ..db import get_db
 from ..deps import get_current_user
 from ..models import Project, Setting, User
+from ..templates import scaffold_project
 
 router = APIRouter(prefix="/api/projects", tags=["projects"], dependencies=[Depends(get_current_user)])
 
@@ -46,14 +47,21 @@ def create_project(body: dict = Body(...), db: Session = Depends(get_db)):
         sort_order=(last.sort_order + 1) if last else 1,
         created_ts=int(time.time() * 1000),
     )
+    db.add(project)
+    db.flush()  # project row must exist before scaffolded FK-bearing rows
+
+    # Scaffold with default categories / phases / starter tasks unless asked not to.
+    span = {}
+    if not body.get("blank"):
+        span = scaffold_project(db, pid)
+
     setting = Setting(
         id=pid,
         total_budget=body.get("total_budget") or 0,
-        project_start=body.get("project_start") or None,
-        project_end=body.get("project_end") or None,
+        project_start=body.get("project_start") or span.get("project_start"),
+        project_end=body.get("project_end") or span.get("project_end"),
         plan_scale=body.get("plan_scale") or 50,
     )
-    db.add(project)
     db.add(setting)
     db.commit()
     return _out(project, setting)

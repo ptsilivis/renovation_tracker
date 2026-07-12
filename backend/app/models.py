@@ -32,6 +32,9 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String)
     display_name: Mapped[str] = mapped_column(String)
     role: Mapped[str] = mapped_column(String, default="admin")
+    # Seeded accounts start on a shared bootstrap password; force a change on
+    # first login until they set their own.
+    must_change_password: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class Project(Base):
