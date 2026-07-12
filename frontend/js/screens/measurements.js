@@ -57,7 +57,7 @@ export default function render(root) {
   const rooms = coll('rooms');
   root.append(h('section', { class: 'section' },
     h('div', { class: 'row-between' }, h('h1', { class: 'page-title', style: { flex: 1 } }, t('navMeasurements')),
-      h('button', { class: 'btn-ghost', onclick: async () => download('kampos-measurements.json', JSON.stringify(await api.exportMeasurements(), null, 2)) }, '⤓ ' + t('exportJson'))),
+      h('button', { class: 'btn-ghost', onclick: async () => download('renovation-measurements.json', JSON.stringify(await api.exportMeasurements(), null, 2)) }, '⤓ ' + t('exportJson'))),
     h('div', { class: 'hint' }, t('measurementsHint')),
     ...rooms.map(roomCard),
     h('div', {}, h('button', { class: 'btn-dashed', onclick: () => store.create('rooms', { name: t('addRoom'), floor_level: 0 }) }, '+ ' + t('addRoom')))));

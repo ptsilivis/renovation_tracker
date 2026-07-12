@@ -1,9 +1,13 @@
-// Bootstrap: login gate → load data → render shell (header + active screen).
-import { api } from './api.js';
-import { state, loadData, onRerender, setLang } from './state.js';
+// Bootstrap: login gate → project picker → render shell (header + active screen).
+import { api, setApiProject } from './api.js';
+import {
+  state, loadData, loadProjects, currentProject, clearProject,
+  onRerender, setLang,
+} from './state.js';
 import { t } from './i18n.js';
 import { h, clear } from './ui.js';
 import { ROUTES, currentKey, renderScreen } from './router.js';
+import renderPicker from './screens/projects.js';
 
 const appEl = document.getElementById('app');
 
@@ -19,7 +23,7 @@ function renderLogin() {
     btn.disabled = true;
     try {
       state.user = await api.login(email.value.trim(), pass.value);
-      await loadData();
+      await loadProjects();
       renderApp();
     } catch {
       err.textContent = t('loginError');
@@ -28,7 +32,7 @@ function renderLogin() {
   };
 
   const form = h('form', { class: 'card card-pad login-card', onsubmit: submit },
-    h('div', { class: 'brand' }, h('div', { class: 'logo' }, 'K'), h('h1', {}, t('loginTitle'))),
+    h('div', { class: 'brand' }, h('div', { class: 'logo' }, 'R'), h('h1', {}, t('loginTitle'))),
     h('label', { class: 'stat-label' }, t('loginEmail')), email,
     h('label', { class: 'stat-label' }, t('loginPassword')), pass,
     err, btn,
@@ -39,6 +43,7 @@ function renderLogin() {
 
 function renderHeader() {
   const active = currentKey();
+  const proj = currentProject();
   const nav = h('nav', { class: 'nav' },
     ROUTES.map((r) =>
       h('button', {
@@ -49,18 +54,20 @@ function renderHeader() {
   );
   const langBtn = h('button', { class: 'lang-btn', onclick: () => setLang(state.lang === 'el' ? 'en' : 'el') },
     state.lang === 'el' ? 'EN' : 'ΕΛ');
+  const switchBtn = h('button', { class: 'icon-btn', title: t('changeProject'), onclick: () => { clearProject(); location.hash = ''; renderApp(); } }, '⌂');
   const logoutBtn = h('button', { class: 'icon-btn', onclick: async () => { await api.logout(); location.reload(); } }, t('logout'));
 
+  const projName = proj ? proj.name : '';
   return h('header', { class: 'hdr' },
     h('div', { class: 'hdr-in' },
       h('div', { class: 'brand' },
-        h('div', { class: 'logo' }, 'K'),
-        h('div', {}, h('div', { class: 'brand-title' }, 'Kampos'), h('div', { class: 'brand-sub' }, t('appSubtitle'))),
+        h('div', { class: 'logo' }, (projName[0] || 'R').toUpperCase()),
+        h('div', {}, h('div', { class: 'brand-title' }, projName || t('appTitle')), h('div', { class: 'brand-sub' }, t('appTitle'))),
       ),
       nav,
       h('div', { class: 'hdr-right' },
         h('span', { class: 'role-badge' }, state.user ? state.user.display_name : ''),
-        langBtn, logoutBtn,
+        switchBtn, langBtn, logoutBtn,
       ),
     ),
   );
@@ -68,19 +75,24 @@ function renderHeader() {
 
 function renderApp() {
   if (!state.user) return renderLogin();
+  if (!state.projectId) return renderPicker(appEl);
   const main = h('main', { class: 'main' });
   clear(appEl).append(renderHeader(), main);
   renderScreen(main);
 }
 
 onRerender(renderApp);
-window.addEventListener('hashchange', renderApp);
+window.addEventListener('hashchange', () => { if (state.user && state.projectId) renderApp(); });
 
 async function boot() {
   document.documentElement.lang = state.lang;
   try {
     state.user = await api.me();
-    await loadData();
+    await loadProjects();
+    if (state.projectId) {
+      setApiProject(state.projectId);
+      await loadData();
+    }
   } catch {
     state.user = null;
   }

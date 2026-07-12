@@ -18,16 +18,16 @@ Requires a domain on a Cloudflare account (the free plan is fine).
 
 ```bash
 cloudflared tunnel login                     # opens browser, authorizes a domain
-cloudflared tunnel create kampos             # creates tunnel + credentials json
+cloudflared tunnel create renovation             # creates tunnel + credentials json
 ```
 
 Create `~/.cloudflared/config.yml`:
 
 ```yaml
-tunnel: kampos
+tunnel: renovation
 credentials-file: /home/pi/.cloudflared/<TUNNEL_ID>.json
 ingress:
-  - hostname: kampos.yourdomain.com
+  - hostname: renovation.yourdomain.com
     service: http://localhost:8000
   - service: http_status:404
 ```
@@ -35,12 +35,12 @@ ingress:
 Point DNS + run as a service:
 
 ```bash
-cloudflared tunnel route dns kampos kampos.yourdomain.com
+cloudflared tunnel route dns renovation renovation.yourdomain.com
 sudo cloudflared service install
 sudo systemctl enable --now cloudflared
 ```
 
-Then the site lives at `https://kampos.yourdomain.com`. Set `COOKIE_SECURE=true`
+Then the site lives at `https://renovation.yourdomain.com`. Set `COOKIE_SECURE=true`
 in `backend/.env` (already advised in DEPLOY.md) so the session cookie is HTTPS-only.
 
 ## Option B — quick throwaway URL (no domain)
@@ -50,4 +50,4 @@ cloudflared tunnel --url http://localhost:8000
 ```
 
 Prints a random `https://<something>.trycloudflare.com` URL. Good for testing;
-the URL changes each run, so use Option A for the real family deployment.
+the URL changes each run, so use Option A for the real deployment.

@@ -17,12 +17,17 @@ from .models import (
     PlanRoom,
     PlanUnderlay,
     PlanWall,
+    Project,
     Room,
     Setting,
     Surface,
     Task,
     User,
 )
+
+# The bundled sample project (a Greek stone-house renovation in Mani). All the
+# demo data below hangs off this project id.
+DEMO_PROJECT_ID = "proj_kampos"
 
 # --- stable id maps (mirror store.js so foreign keys line up) ---------------
 CAT = {k: f"cat_{k}" for k in
@@ -155,10 +160,13 @@ USERS = [
     ("u_member4", "member4@kampos.gr", "Μέλος 4"),
 ]
 
+# Deleted parent-last so foreign keys unwind cleanly (Project cascades anyway).
 _DATA_TABLES = [
     Activity, CostItem, MoodboardItem, Surface, Task, PlanRoom, PlanWall,
-    PlanUnderlay, Phase, Room, Category, Setting,
+    PlanUnderlay, Phase, Room, Category, Setting, Project,
 ]
+
+P = DEMO_PROJECT_ID  # every seeded row belongs to the demo project
 
 
 def seed_all(db: Session, reset: bool = False) -> None:
@@ -168,31 +176,36 @@ def seed_all(db: Session, reset: bool = False) -> None:
         db.commit()
 
     if db.query(Category).count() == 0:
-        db.add(Setting(id="app", total_budget=50000, project_start="2026-10", project_end="2028-05", plan_scale=50))
+        import time
+        db.add(Project(id=P, name="Kampos", sort_order=1,
+                       description="Stone-house renovation in Messinian Mani — the bundled sample project.",
+                       created_ts=int(time.time() * 1000)))
+        db.add(Setting(id=P, total_budget=50000, project_start="2026-10", project_end="2028-05", plan_scale=50))
+        db.flush()  # project must exist before its FK-bearing rows
         for cid, el, en, order in CATEGORIES:
-            db.add(Category(id=cid, name_el=el, name_en=en, sort_order=order))
+            db.add(Category(id=cid, project_id=P, name_el=el, name_en=en, sort_order=order))
         for rid, name, floor in ROOMS:
-            db.add(Room(id=rid, name=name, floor_level=floor))
+            db.add(Room(id=rid, project_id=P, name=name, floor_level=floor))
         for tid, cat, title, status, prio, dep, contr, notes in TASKS:
-            db.add(Task(id=tid, category_id=cat, title=title, status=status,
+            db.add(Task(id=tid, project_id=P, category_id=cat, title=title, status=status,
                         priority=prio, dependency_note=dep, contractor=contr, notes=notes))
         db.flush()  # categories/rooms/tasks must exist before FK-bearing rows
         from .crud import new_id
         for cat, task, desc, planned, actual, status, contr, date, receipt in COSTS:
-            db.add(CostItem(id=new_id("cost_items"), category_id=cat, task_id=task,
+            db.add(CostItem(id=new_id("cost_items"), project_id=P, category_id=cat, task_id=task,
                             description=desc, planned_cost=planned, actual_cost=actual,
                             status=status, contractor=contr, date=date, has_receipt=receipt))
         for url, title, room, comment, likes in MOOD:
-            db.add(MoodboardItem(id=new_id("moodboard_items"), url=url, title=title,
+            db.add(MoodboardItem(id=new_id("moodboard_items"), project_id=P, url=url, title=title,
                                  room_id=room, comment=comment, likes=likes))
         for room, typ, label, w, h, notes in SURFACES:
-            db.add(Surface(id=new_id("surfaces"), room_id=room, type=typ, label=label,
+            db.add(Surface(id=new_id("surfaces"), project_id=P, room_id=room, type=typ, label=label,
                            width_cm=w, height_cm=h, notes=notes))
         for i, (el, en, start, end) in enumerate(PHASES, start=1):
-            db.add(Phase(id=new_id("phases"), name_el=el, name_en=en, start=start,
+            db.add(Phase(id=new_id("phases"), project_id=P, name_el=el, name_en=en, start=start,
                          end=end, milestone=("2027-03" if en == "Roof" else None), sort_order=i))
         for ts, el, en in ACTIVITY:
-            db.add(Activity(id=new_id("activity"), ts=ts, text_el=el, text_en=en))
+            db.add(Activity(id=new_id("activity"), project_id=P, ts=ts, text_el=el, text_en=en))
         db.commit()
 
     # Users (create any missing; never overwrite an existing password).

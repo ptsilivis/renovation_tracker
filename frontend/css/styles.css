@@ -1,4 +1,4 @@
-/* Kampos Hub — Aegean theme. Tokens ported from the Claude Design source. */
+/* RenovationHub — Aegean theme. Tokens ported from the Claude Design source. */
 :root {
   --bg: #f3f5f5;
   --ink: #1d2b31;
@@ -288,3 +288,26 @@ main.main > section { animation: kh-fade var(--dur-2) var(--ease) both; }
   .mood-card:hover { transform: none; }
   .del-btn:hover { transform: none; }
 }
+
+/* ---- project picker ---- */
+.picker-wrap { max-width: 1100px; margin: 0 auto; padding: clamp(24px, 5vw, 56px) 0; }
+.proj-grid {
+  display: grid; gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+.proj-card {
+  position: relative; text-align: left; cursor: pointer;
+  display: flex; flex-direction: column; gap: 6px; min-height: 132px;
+  transition: transform var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease);
+}
+.proj-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); }
+.proj-name { font-family: 'Literata', serif; font-weight: 700; font-size: 19px; }
+.proj-desc { font-size: 12px; line-height: 1.4; }
+.proj-budget { margin-top: auto; font-size: 20px; font-weight: 700; color: var(--teal); }
+.muted { color: var(--muted); }
+.proj-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 4px; opacity: 0; transition: opacity var(--dur-1) var(--ease); }
+.proj-card:hover .proj-actions { opacity: 1; }
+.proj-new { align-items: center; justify-content: center; gap: 8px; color: var(--muted); font-weight: 600; }
+.proj-plus { font-size: 30px; line-height: 1; font-weight: 400; }
+.proj-form { cursor: default; gap: 8px; }
+.proj-form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }

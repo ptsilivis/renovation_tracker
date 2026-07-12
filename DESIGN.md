@@ -1,4 +1,4 @@
-# Design system — Kampos Hub
+# Design system — RenovationHub
 
 Aegean theme. Restrained color strategy (tinted neutrals + teal, terracotta as
 the single accent). Light theme: daytime household use, calm and legible.

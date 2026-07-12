@@ -52,6 +52,7 @@ _PREFIX = {
     "plan_rooms": "prm",
     "plan_walls": "pwl",
     "plan_underlays": "pun",
+    "projects": "proj",
 }
 
 
@@ -69,52 +70,57 @@ def _clean(value):
 
 def serialize(collection: str, row) -> dict:
     if collection in _JSON_COLLECTIONS:
+        # project_id is a real column here, not part of the free-form geometry blob.
         return {"id": row.id, **(row.data or {})}
     return {c: _clean(getattr(row, c)) for c in _cols(type(row))}
 
 
-def list_all(db: Session, collection: str) -> list[dict]:
+def _row_fields(model, body: dict) -> dict:
+    """Body fields that map to real columns, minus id/project_id (set explicitly)."""
+    allowed = set(_cols(model)) - {"id", "project_id"}
+    return {k: v for k, v in body.items() if k in allowed}
+
+
+def _make_row(collection: str, model, body: dict, project_id: str):
+    rid = body.get("id") or new_id(collection)
+    if collection in _JSON_COLLECTIONS:
+        data = {k: v for k, v in body.items() if k not in ("id", "project_id")}
+        return model(id=rid, project_id=project_id, data=data)
+    return model(id=rid, project_id=project_id, **_row_fields(model, body))
+
+
+def list_all(db: Session, collection: str, project_id: str) -> list[dict]:
     model = REGISTRY[collection]
-    rows = db.query(model).all()
+    rows = db.query(model).filter(model.project_id == project_id).all()
     return [serialize(collection, r) for r in rows]
 
 
-def create(db: Session, collection: str, body: dict) -> dict:
+def create(db: Session, collection: str, body: dict, project_id: str) -> dict:
     model = REGISTRY[collection]
-    rid = body.get("id") or new_id(collection)
-    if collection in _JSON_COLLECTIONS:
-        data = {k: v for k, v in body.items() if k != "id"}
-        row = model(id=rid, data=data)
-    else:
-        allowed = set(_cols(model))
-        fields = {k: v for k, v in body.items() if k in allowed and k != "id"}
-        row = model(id=rid, **fields)
+    row = _make_row(collection, model, body, project_id)
     db.add(row)
     db.commit()
     db.refresh(row)
     return serialize(collection, row)
 
 
-def bulk_create(db: Session, collection: str, items: list[dict]) -> list[dict]:
+def bulk_create(db: Session, collection: str, items: list[dict], project_id: str) -> list[dict]:
     model = REGISTRY[collection]
-    rows = []
-    for body in items:
-        rid = body.get("id") or new_id(collection)
-        if collection in _JSON_COLLECTIONS:
-            rows.append(model(id=rid, data={k: v for k, v in body.items() if k != "id"}))
-        else:
-            allowed = set(_cols(model))
-            rows.append(model(id=rid, **{k: v for k, v in body.items() if k in allowed and k != "id"}))
+    rows = [_make_row(collection, model, body, project_id) for body in items]
     db.add_all(rows)
     db.commit()
     return [serialize(collection, r) for r in rows]
 
 
-def bulk_delete(db: Session, collection: str, ids: list[str]) -> int:
+def bulk_delete(db: Session, collection: str, ids: list[str], project_id: str) -> int:
     model = REGISTRY[collection]
     if not ids:
         return 0
-    n = db.query(model).filter(model.id.in_(ids)).delete(synchronize_session=False)
+    n = (
+        db.query(model)
+        .filter(model.id.in_(ids), model.project_id == project_id)
+        .delete(synchronize_session=False)
+    )
     db.commit()
     return n
 

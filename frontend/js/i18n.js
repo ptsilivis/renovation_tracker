@@ -4,14 +4,18 @@ import { state } from './state.js';
 
 const DICT = {
   el: {
-    appSubtitle: 'Ανακαίνιση εξοχικού · Μάνη',
+    appTitle: 'RenovationHub', appSubtitle: 'Παρακολούθηση ανακαίνισης',
     navOverview: 'Επισκόπηση', navTasks: 'Εργασίες', navCosts: 'Κόστη',
     navMoodboard: 'Moodboard', navPlan: 'Κάτοψη', navMeasurements: 'Μετρήσεις',
     logout: 'Έξοδος',
 
     // login
-    loginTitle: 'Kampos Hub', loginEmail: 'Email', loginPassword: 'Κωδικός',
+    loginTitle: 'RenovationHub', loginEmail: 'Email', loginPassword: 'Κωδικός',
     loginBtn: 'Σύνδεση', loginError: 'Λάθος email ή κωδικός.',
+
+    // project picker
+    pickProject: 'Επιλέξτε έργο', newProject: 'Νέο έργο', projectName: 'Όνομα έργου',
+    changeProject: 'Αλλαγή έργου', rename: 'Μετονομασία', confirmDelete: 'Σίγουρα;',
 
     // overview
     statBudget: 'Προϋπολογισμός', statSpent: 'Δαπανήθηκε', statRemaining: 'Υπόλοιπο',
@@ -63,13 +67,17 @@ const DICT = {
     delete: 'Διαγραφή', floor: 'Όροφος', ground: 'Ισόγειο', upper: 'Α΄ όροφος',
   },
   en: {
-    appSubtitle: 'Summer-house renovation · Mani',
+    appTitle: 'RenovationHub', appSubtitle: 'Renovation tracker',
     navOverview: 'Overview', navTasks: 'Tasks', navCosts: 'Costs',
     navMoodboard: 'Moodboard', navPlan: 'Floor plan', navMeasurements: 'Measurements',
     logout: 'Log out',
 
-    loginTitle: 'Kampos Hub', loginEmail: 'Email', loginPassword: 'Password',
+    loginTitle: 'RenovationHub', loginEmail: 'Email', loginPassword: 'Password',
     loginBtn: 'Sign in', loginError: 'Wrong email or password.',
+
+    // project picker
+    pickProject: 'Choose a project', newProject: 'New project', projectName: 'Project name',
+    changeProject: 'Change project', rename: 'Rename', confirmDelete: 'Sure?',
 
     statBudget: 'Budget', statSpent: 'Spent', statRemaining: 'Remaining',
     statProgress: 'Task progress', editHint: 'Click to edit',

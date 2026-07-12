@@ -3,17 +3,17 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: kampos-db
+    container_name: renovation-db
     environment:
-      POSTGRES_USER: kampos
-      POSTGRES_PASSWORD: kampos
-      POSTGRES_DB: kampos
+      POSTGRES_USER: renovation
+      POSTGRES_PASSWORD: renovation
+      POSTGRES_DB: renovation
     ports:
       - "5432:5432"
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kampos"]
+      test: ["CMD-SHELL", "pg_isready -U renovation"]
       interval: 5s
       timeout: 3s
       retries: 10

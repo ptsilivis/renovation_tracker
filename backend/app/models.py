@@ -18,6 +18,12 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
 
+# Foreign key onto the owning project, applied to every project-scoped table.
+# Deleting a project cascades to all of its data.
+_PROJECT_FK = lambda: mapped_column(
+    ForeignKey("projects.id", ondelete="CASCADE"), index=True, nullable=False
+)
+
 
 class User(Base):
     __tablename__ = "users"
@@ -28,9 +34,22 @@ class User(Base):
     role: Mapped[str] = mapped_column(String, default="admin")
 
 
+class Project(Base):
+    """A single renovation. Users are global; all data below belongs to a project."""
+    __tablename__ = "projects"
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    name: Mapped[str] = mapped_column(String, default="")
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    created_ts: Mapped[int] = mapped_column(BigInteger, default=0)  # epoch ms
+
+
 class Setting(Base):
+    """One row per project; the primary key IS the project id."""
     __tablename__ = "settings"
-    id: Mapped[str] = mapped_column(String, primary_key=True, default="app")
+    id: Mapped[str] = mapped_column(
+        ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
+    )
     total_budget: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
     project_start: Mapped[str | None] = mapped_column(CHAR(7), nullable=True)  # YYYY-MM
     project_end: Mapped[str | None] = mapped_column(CHAR(7), nullable=True)
@@ -40,6 +59,7 @@ class Setting(Base):
 class Category(Base):
     __tablename__ = "categories"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    project_id: Mapped[str] = _PROJECT_FK()
     name_el: Mapped[str] = mapped_column(String)
     name_en: Mapped[str | None] = mapped_column(String, nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
@@ -48,6 +68,7 @@ class Category(Base):
 class Task(Base):
     __tablename__ = "tasks"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    project_id: Mapped[str] = _PROJECT_FK()
     category_id: Mapped[str | None] = mapped_column(
         ForeignKey("categories.id", ondelete="SET NULL"), nullable=True
     )
@@ -62,6 +83,7 @@ class Task(Base):
 class CostItem(Base):
     __tablename__ = "cost_items"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    project_id: Mapped[str] = _PROJECT_FK()
     category_id: Mapped[str | None] = mapped_column(
         ForeignKey("categories.id", ondelete="SET NULL"), nullable=True
     )
@@ -81,6 +103,7 @@ class CostItem(Base):
 class Room(Base):
     __tablename__ = "rooms"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    project_id: Mapped[str] = _PROJECT_FK()
     name: Mapped[str] = mapped_column(String, default="")
     floor_level: Mapped[int] = mapped_column(Integer, default=0)
 
@@ -88,6 +111,7 @@ class Room(Base):
 class Surface(Base):
     __tablename__ = "surfaces"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    project_id: Mapped[str] = _PROJECT_FK()
     room_id: Mapped[str | None] = mapped_column(
         ForeignKey("rooms.id", ondelete="CASCADE"), nullable=True
     )
@@ -101,6 +125,7 @@ class Surface(Base):
 class MoodboardItem(Base):
     __tablename__ = "moodboard_items"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    project_id: Mapped[str] = _PROJECT_FK()
     url: Mapped[str] = mapped_column(Text, default="")
     image_ref: Mapped[str | None] = mapped_column(String, nullable=True)
     title: Mapped[str] = mapped_column(Text, default="")
@@ -114,6 +139,7 @@ class MoodboardItem(Base):
 class Phase(Base):
     __tablename__ = "phases"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    project_id: Mapped[str] = _PROJECT_FK()
     name_el: Mapped[str] = mapped_column(String, default="")
     name_en: Mapped[str] = mapped_column(String, default="")
     start: Mapped[str] = mapped_column(CHAR(7), default="")  # YYYY-MM
@@ -126,24 +152,28 @@ class Phase(Base):
 class PlanRoom(Base):
     __tablename__ = "plan_rooms"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    project_id: Mapped[str] = _PROJECT_FK()
     data: Mapped[dict] = mapped_column(JSONB, default=dict)
 
 
 class PlanWall(Base):
     __tablename__ = "plan_walls"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    project_id: Mapped[str] = _PROJECT_FK()
     data: Mapped[dict] = mapped_column(JSONB, default=dict)
 
 
 class PlanUnderlay(Base):
     __tablename__ = "plan_underlays"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    project_id: Mapped[str] = _PROJECT_FK()
     data: Mapped[dict] = mapped_column(JSONB, default=dict)
 
 
 class Activity(Base):
     __tablename__ = "activity"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    project_id: Mapped[str] = _PROJECT_FK()
     ts: Mapped[int] = mapped_column(BigInteger, index=True)  # epoch ms
     text_el: Mapped[str] = mapped_column(Text, default="")
     text_en: Mapped[str] = mapped_column(Text, default="")

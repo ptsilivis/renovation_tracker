@@ -1,19 +1,19 @@
-# Kampos Hub — Product Requirements Document
+# RenovationHub — Product Requirements Document
 
 **Status:** Draft (decisions locked 2026-07-11)
 **Owner:** Panos Tsilivis
-**Repo:** `KamposHub` (git, branch `main`)
+**Repo:** `renovation_tracker` (git, branch `main`)
 
 ---
 
 ## 1. Purpose
 
-Kampos Hub is a shared web dashboard for tracking the renovation of a family
-summer house (an old stone house in Messinian Mani, Greece; working budget
-~€50,000). It centralises **financial tracking** (planned vs. actual costs) and
-**project activities** (tasks, phase timeline, design ideas, floor plan) so that
-four family members share a single source of truth instead of scattered chats,
-spreadsheets, and photos.
+RenovationHub is a shared web dashboard for tracking home-renovation projects. It
+centralises **financial tracking** (planned vs. actual costs) and **project
+activities** (tasks, phase timeline, design ideas, floor plan) so that a small
+group shares a single source of truth instead of scattered chats, spreadsheets,
+and photos. It supports **multiple projects** — the bundled sample is a family
+stone-house renovation in Messinian Mani, Greece (working budget ~€50,000).
 
 The UI already exists as a polished design in Claude Design
 ("Kampos Renovation Hub", file `Kampos Hub - Aegean.dc.html`). This project turns

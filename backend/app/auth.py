@@ -9,7 +9,7 @@ from jose import JWTError, jwt
 from .config import settings
 
 _ph = PasswordHasher()
-COOKIE_NAME = "kampos_session"
+COOKIE_NAME = "renovation_session"
 ALGO = "HS256"
 
 

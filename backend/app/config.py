@@ -11,7 +11,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    database_url: str = "postgresql+psycopg://kampos:kampos@localhost:5432/kampos"
+    database_url: str = "postgresql+psycopg://renovation:renovation@localhost:5432/renovation"
     jwt_secret: str = "dev-secret-change-me"
     jwt_expire_hours: int = 168
     cookie_secure: bool = False

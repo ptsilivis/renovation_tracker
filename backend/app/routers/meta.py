@@ -1,7 +1,7 @@
-"""Settings, activity logging, measurements export, dev reset."""
+"""Settings, activity logging, measurements export, dev reset. All per-project."""
 import time
 
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, Query
 from sqlalchemy.orm import Session
 
 from .. import crud
@@ -23,15 +23,15 @@ def _settings_out(s: Setting | None) -> dict:
 
 
 @router.get("/settings")
-def get_settings(db: Session = Depends(get_db)):
-    return _settings_out(db.get(Setting, "app"))
+def get_settings(project: str = Query(...), db: Session = Depends(get_db)):
+    return _settings_out(db.get(Setting, project))
 
 
 @router.patch("/settings")
-def patch_settings(patch: dict = Body(...), db: Session = Depends(get_db)):
-    s = db.get(Setting, "app")
+def patch_settings(project: str = Query(...), patch: dict = Body(...), db: Session = Depends(get_db)):
+    s = db.get(Setting, project)
     if s is None:
-        s = Setting(id="app", total_budget=0)
+        s = Setting(id=project, total_budget=0)
         db.add(s)
     if "total_budget" in patch:
         s.total_budget = patch["total_budget"]
@@ -47,12 +47,14 @@ def patch_settings(patch: dict = Body(...), db: Session = Depends(get_db)):
 
 @router.post("/activity")
 def log_activity(
+    project: str = Query(...),
     body: dict = Body(...),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     entry = Activity(
         id=new_id("activity"),
+        project_id=project,
         ts=int(time.time() * 1000),
         text_el=body.get("el", ""),
         text_en=body.get("en", ""),
@@ -64,13 +66,13 @@ def log_activity(
 
 
 @router.get("/measurements/export")
-def export_measurements(db: Session = Depends(get_db)):
+def export_measurements(project: str = Query(...), db: Session = Depends(get_db)):
     return {
-        "rooms": crud.list_all(db, "rooms"),
-        "surfaces": crud.list_all(db, "surfaces"),
+        "rooms": crud.list_all(db, "rooms", project),
+        "surfaces": crud.list_all(db, "surfaces", project),
         "plan": {
-            "rooms": crud.list_all(db, "plan_rooms"),
-            "walls": crud.list_all(db, "plan_walls"),
+            "rooms": crud.list_all(db, "plan_rooms", project),
+            "walls": crud.list_all(db, "plan_walls", project),
         },
     }
 

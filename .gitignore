@@ -14,11 +14,12 @@ backend/.env
 uploads/
 backend/uploads/
 
-# OS / editor
+# OS / editor / local tooling
 .DS_Store
 *.swp
 .idea/
 .vscode/
+.claude/
 
 # Local data
 *.sqlite3

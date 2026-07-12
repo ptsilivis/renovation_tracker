@@ -1,5 +1,9 @@
-"""Generic per-collection CRUD + the full data snapshot (== repo.getAll())."""
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+"""Generic per-collection CRUD + the full data snapshot (== repo.getAll()).
+
+Every collection is scoped to the active project, passed as a `?project=<id>`
+query parameter (the SPA always knows its current project).
+"""
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from .. import crud
@@ -16,11 +20,15 @@ def _check(collection: str):
 
 
 @router.get("/data")
-def snapshot(db: Session = Depends(get_db)):
-    """Everything the SPA needs in one call, mirroring the design's getAll()."""
-    setting = db.get(Setting, "app")
+def snapshot(project: str = Query(...), db: Session = Depends(get_db)):
+    """Everything the SPA needs for one project in one call (mirrors getAll())."""
+    setting = db.get(Setting, project)
     activity = (
-        db.query(Activity).order_by(Activity.ts.desc()).limit(40).all()
+        db.query(Activity)
+        .filter(Activity.project_id == project)
+        .order_by(Activity.ts.desc())
+        .limit(40)
+        .all()
     )
     out = {
         "settings": {
@@ -34,19 +42,25 @@ def snapshot(db: Session = Depends(get_db)):
         ],
     }
     for name in crud.REGISTRY:
-        out[name] = crud.list_all(db, name)
+        out[name] = crud.list_all(db, name, project)
     return out
 
 
 @router.post("/{collection}/bulk")
-def bulk_create_items(collection: str, items: list[dict] = Body(...), db: Session = Depends(get_db)):
+def bulk_create_items(
+    collection: str,
+    project: str = Query(...),
+    items: list[dict] = Body(...),
+    db: Session = Depends(get_db),
+):
     _check(collection)
-    return crud.bulk_create(db, collection, items)
+    return crud.bulk_create(db, collection, items, project)
 
 
 @router.post("/{collection}/bulk_delete")
 def bulk_delete_items(
     collection: str,
+    project: str = Query(...),
     ids: list[str] = Body(...),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -54,13 +68,18 @@ def bulk_delete_items(
     _check(collection)
     if user.role != "admin":
         raise HTTPException(status.HTTP_403_FORBIDDEN, "members cannot delete")
-    return {"deleted": crud.bulk_delete(db, collection, ids)}
+    return {"deleted": crud.bulk_delete(db, collection, ids, project)}
 
 
 @router.post("/{collection}")
-def create_item(collection: str, body: dict = Body(...), db: Session = Depends(get_db)):
+def create_item(
+    collection: str,
+    project: str = Query(...),
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+):
     _check(collection)
-    return crud.create(db, collection, body)
+    return crud.create(db, collection, body, project)
 
 
 @router.patch("/{collection}/{item_id}")

@@ -1,14 +1,15 @@
-# Product context — Kampos Hub
+# Product context — RenovationHub
 
 register: product
 
 ## Users
 
-Four adult family members (siblings/parents, not technical) co-managing the
-renovation of an old stone summer house in Messinian Mani. They open the app to
-answer concrete questions: how much is left in the budget, what is paid, which
-task is next, what did we decide about the kitchen tiles. Mixed devices, mostly
-phones and laptops, in daylight, unhurried. Greek is the primary language.
+A small group of non-technical people (often a family) co-managing one or more
+home renovations. They open the app to answer concrete questions: how much is
+left in the budget, what is paid, which task is next, what did we decide about the
+kitchen tiles. Mixed devices, mostly phones and laptops, in daylight, unhurried.
+Bilingual Greek / English; the bundled sample project is a Greek stone-house
+renovation in Mani.
 
 ## Product purpose
 
