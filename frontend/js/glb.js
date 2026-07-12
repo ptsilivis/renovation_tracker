@@ -60,6 +60,9 @@ export function mergeCollinear(segs, snap) {
 // faithful), then merges collinear fragments to keep the wall count sane.
 // Returns { walls: [{x1,y1,x2,y2}], scale } where scale is px-per-model-unit
 // (≈ px per metre for a metric model) so dimensions read as real measurements.
+const WALL_RE = /wall|τοιχ|toich/i;
+const FURN_RE = /sofa|couch|chair|stool|table|desk|bed|cabinet|wardrobe|shelf|closet|furnitur|kitchen|counter|καναπ|τραπεζ|κρεβατ|καρεκλ|ντουλαπ|επιπλ|έπιπλ|κουζιν/i;
+
 export async function glbToWalls(url, targetW, targetH, opts = {}) {
   await ensureThree();
   const margin = opts.margin ?? 40;
@@ -70,18 +73,24 @@ export async function glbToWalls(url, targetW, targetH, opts = {}) {
   const vA = new THREE.Vector3(), vB = new THREE.Vector3(), vC = new THREE.Vector3();
   const ab = new THREE.Vector3(), cb = new THREE.Vector3(), n = new THREE.Vector3();
 
-  // Dedupe undirected edges in model space; keep them all (no boundary filter —
-  // that is what scrambled the layout previously).
-  const seen = new Set();
-  const raw = [];
+  // Dedupe undirected edges; keep them all (no boundary filter). Track each
+  // edge's source-triangle vertical span + any name-forced kind for wall vs
+  // furniture classification.
+  const edges = new Map();
   let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
-  const add = (x1, z1, x2, z2) => {
+  let minY = Infinity, maxY = -Infinity;
+  const add = (x1, z1, x2, z2, spanY, forced) => {
     if (x1 === x2 && z1 === z2) return;
     const a = `${round3(x1)},${round3(z1)}`, b = `${round3(x2)},${round3(z2)}`;
     const key = a < b ? a + '|' + b : b + '|' + a;
-    if (seen.has(key)) return;
-    seen.add(key);
-    raw.push([x1, z1, x2, z2]);
+    const e = edges.get(key);
+    if (e) {
+      e.spanY = Math.max(e.spanY, spanY);
+      if (forced === 'wall') e.forced = 'wall';
+      else if (forced && !e.forced) e.forced = forced;
+    } else {
+      edges.set(key, { seg: [x1, z1, x2, z2], spanY, forced });
+    }
     minX = Math.min(minX, x1, x2); maxX = Math.max(maxX, x1, x2);
     minZ = Math.min(minZ, z1, z2); maxZ = Math.max(maxZ, z1, z2);
   };
@@ -90,6 +99,8 @@ export async function glbToWalls(url, targetW, targetH, opts = {}) {
     if (!o.isMesh || !o.geometry) return;
     const pos = o.geometry.attributes.position;
     if (!pos) return;
+    const name = o.name || (o.parent && o.parent.name) || '';
+    const forced = WALL_RE.test(name) ? 'wall' : FURN_RE.test(name) ? 'furniture' : null;
     const index = o.geometry.index;
     const tris = index ? index.count / 3 : pos.count / 3;
     for (let ti = 0; ti < tris; ti++) {
@@ -100,12 +111,24 @@ export async function glbToWalls(url, targetW, targetH, opts = {}) {
       vB.fromBufferAttribute(pos, b).applyMatrix4(o.matrixWorld);
       vC.fromBufferAttribute(pos, c).applyMatrix4(o.matrixWorld);
       cb.subVectors(vC, vB); ab.subVectors(vA, vB); n.crossVectors(cb, ab).normalize();
-      if (Math.abs(n.y) > 0.5) continue; // keep walls, drop floors/ceilings
-      add(vA.x, vA.z, vB.x, vB.z); add(vB.x, vB.z, vC.x, vC.z); add(vC.x, vC.z, vA.x, vA.z);
+      if (Math.abs(n.y) > 0.5) continue; // keep vertical surfaces
+      const triMinY = Math.min(vA.y, vB.y, vC.y), triMaxY = Math.max(vA.y, vB.y, vC.y);
+      const spanY = triMaxY - triMinY;
+      minY = Math.min(minY, triMinY); maxY = Math.max(maxY, triMaxY);
+      add(vA.x, vA.z, vB.x, vB.z, spanY, forced);
+      add(vB.x, vB.z, vC.x, vC.z, spanY, forced);
+      add(vC.x, vC.z, vA.x, vA.z, spanY, forced);
     }
   });
 
-  if (!raw.length || !isFinite(minX)) return { walls: [], scale: null };
+  if (!edges.size || !isFinite(minX)) return { walls: [], scale: null };
+
+  // Classify: tall surfaces (floor-to-ceiling) are walls, short ones furniture.
+  const H = Math.max(1e-6, maxY - minY);
+  const raw = [...edges.values()].map((e) => ({
+    seg: e.seg,
+    kind: e.forced || (e.spanY >= 0.45 * H ? 'wall' : 'furniture'),
+  }));
 
   // Uniform fit-to-canvas (same transform as the known-good drawing).
   const spanX = Math.max(1e-6, maxX - minX);
@@ -117,18 +140,18 @@ export async function glbToWalls(url, targetW, targetH, opts = {}) {
     Math.round((x1 - minX) * scale + offX), Math.round((z1 - minZ) * scale + offY),
     Math.round((x2 - minX) * scale + offX), Math.round((z2 - minZ) * scale + offY),
   ];
-  const fitted = raw.map(fit).filter((s) => s[0] !== s[2] || s[1] !== s[3]);
 
-  // Merge collinear fragments in pixel space to reduce editable-wall count.
-  // Guard: if the merge produces anything outside the canvas, it misbehaved —
-  // fall back to the unmerged (guaranteed-correct) segments.
-  let out = fitted;
-  try {
-    const merged = mergeCollinear(fitted, 3);
-    const ok = merged.length && merged.every((s) =>
-      s.every((v, i) => v >= -20 && v <= (i % 2 === 0 ? targetW : targetH) + 20));
-    if (ok) out = merged.map((s) => s.map(Math.round));
-  } catch { /* keep fitted */ }
+  const inBounds = (s) => s.every((v, i) => v >= -20 && v <= (i % 2 === 0 ? targetW : targetH) + 20);
+  const buildKind = (kind) => {
+    const fitted = raw.filter((r) => r.kind === kind).map((r) => fit(r.seg)).filter((s) => s[0] !== s[2] || s[1] !== s[3]);
+    if (!fitted.length) return [];
+    let out = fitted;
+    try {
+      const merged = mergeCollinear(fitted, 3);
+      if (merged.length && merged.every(inBounds)) out = merged.map((s) => s.map(Math.round));
+    } catch { /* keep fitted */ }
+    return out.map(([x1, y1, x2, y2]) => ({ x1, y1, x2, y2, kind }));
+  };
 
-  return { walls: out.map(([x1, y1, x2, y2]) => ({ x1, y1, x2, y2 })), scale };
+  return { walls: [...buildKind('wall'), ...buildKind('furniture')], scale };
 }

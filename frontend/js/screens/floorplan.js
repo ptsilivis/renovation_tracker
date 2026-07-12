@@ -6,11 +6,12 @@ import { t } from '../i18n.js';
 import { glbToWalls } from '../glb.js';
 
 // Local (non-persisted) editor UI state.
-const ed = { zoom: 1, showDims: false, sel: null, converting: false };
+const ed = { zoom: 1, showDims: false, sel: null, converting: false, floor: 0, savedFlash: false };
 const CANVAS_W = 900, CANVAS_H = 620, GRID = 40;
+const onFloor = (el) => (el.floor ?? 0) === ed.floor;
 
-// plan_rooms rows: { id, x, y, w, h, name }.  plan_walls rows: { id, x1,y1,x2,y2 }.
-// Persist geometry only at drag end (mouseup); during drag we mutate the DOM.
+// plan_rooms: {id,x,y,w,h,name,floor}. plan_walls: {id,x1,y1,x2,y2,kind,floor}.
+// Geometry persists on drag end; kind = 'wall' | 'furniture'.
 
 function screenToUser(svg, gEl, evt) {
   const pt = svg.createSVGPoint();
@@ -30,8 +31,29 @@ function drag(svg, gEl, evt, onMove, onEnd) {
   document.addEventListener('mouseup', up);
 }
 
+// Keyboard: Delete removes the selection, Escape deselects. Bound once; only
+// acts while the floor-plan screen is showing and focus isn't in a field.
+let kbBound = false;
+function bindKeys(rerender) {
+  if (kbBound) return;
+  kbBound = true;
+  document.addEventListener('keydown', (e) => {
+    if (!location.hash.includes('plan')) return;
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+    if ((e.key === 'Delete' || e.key === 'Backspace') && ed.sel) {
+      e.preventDefault();
+      const s = ed.sel; ed.sel = null;
+      store.remove(s.type, s.id);
+    } else if (e.key === 'Escape' && ed.sel) {
+      ed.sel = null; rerender();
+    }
+  });
+}
+
 export default function render(root) {
   const rebuild = () => { root.replaceChildren(); build(); };
+  bindKeys(rebuild);
 
   function toolbar() {
     const fileGlb = h('input', { type: 'file', accept: '.glb,.gltf', style: { display: 'none' },
@@ -44,20 +66,17 @@ export default function render(root) {
           ed.converting = false;
           if (!walls.length) { rebuild(); return; }
           await store.mutate(async () => {
-            if (scale) await api.patchSettings({ plan_scale: Math.round(scale * 100) / 100 }); // real measurements from the fit
-            await api.bulkCreate('plan_walls', walls);
+            if (scale) await api.patchSettings({ plan_scale: Math.round(scale * 100) / 100 });
+            await api.bulkCreate('plan_walls', walls.map((w) => ({ ...w, floor: ed.floor })));
           });
-        } catch (err) {
-          ed.converting = false;
-          console.error('GLB convert failed', err);
-          rebuild();
-        }
+        } catch (err) { ed.converting = false; console.error('GLB convert failed', err); rebuild(); }
       } });
     const fileImg = h('input', { type: 'file', accept: 'image/*', style: { display: 'none' },
-      onchange: async (e) => { const f = e.target.files[0]; if (!f) return; const r = await api.upload(f); await store.create('plan_underlays', { kind: 'image', file: r.name, w: CANVAS_W, h: CANVAS_H, opacity: 0.6 }); } });
+      onchange: async (e) => { const f = e.target.files[0]; if (!f) return; const r = await api.upload(f); await store.create('plan_underlays', { kind: 'image', file: r.name, w: CANVAS_W, h: CANVAS_H, opacity: 0.6, floor: ed.floor }); } });
     return h('div', { class: 'plan-toolbar' },
-      h('button', { class: 'btn-ghost', onclick: () => store.create('plan_rooms', { x: 60, y: 60, w: 180, h: 130, name: t('addPlanRoom') }) }, '▢ ' + t('addPlanRoom')),
-      h('button', { class: 'btn-ghost', onclick: () => store.create('plan_walls', { x1: 80, y1: 200, x2: 320, y2: 200 }) }, '／ ' + t('addPlanWall')),
+      h('button', { class: 'btn-ghost', onclick: () => store.create('plan_rooms', { x: 60, y: 60, w: 180, h: 130, name: t('addPlanRoom'), floor: ed.floor }) }, '▢ ' + t('addPlanRoom')),
+      h('button', { class: 'btn-ghost', onclick: () => store.create('plan_walls', { x1: 80, y1: 200, x2: 320, y2: 200, kind: 'wall', floor: ed.floor }) }, '／ ' + t('addPlanWall')),
+      h('button', { class: 'btn-ghost', onclick: () => store.create('plan_walls', { x1: 120, y1: 320, x2: 260, y2: 320, kind: 'furniture', floor: ed.floor }) }, '🛋 ' + t('addFurniture')),
       h('button', { class: ed.showDims ? 'btn' : 'btn-ghost', style: { borderRadius: '8px' }, onclick: () => { ed.showDims = !ed.showDims; rebuild(); } }, '⟷ ' + t('showDims')),
       h('div', { style: { display: 'flex', gap: '2px' } },
         h('button', { class: 'btn-ghost', onclick: () => { ed.zoom = Math.max(0.4, ed.zoom - 0.1); rebuild(); } }, '−'),
@@ -70,9 +89,9 @@ export default function render(root) {
   }
 
   function build() {
-    const rooms = coll('plan_rooms');
-    const walls = coll('plan_walls');
-    const underlay = coll('plan_underlays').find((u) => u.kind === 'image');
+    const rooms = coll('plan_rooms').filter(onFloor);
+    const walls = coll('plan_walls').filter(onFloor);
+    const underlay = coll('plan_underlays').find((u) => u.kind === 'image' && onFloor(u));
     const scale = store.settings().plan_scale || 50;      // px per metre
     const metres = (px) => (px / scale).toFixed(2) + ' m';
 
@@ -80,7 +99,6 @@ export default function render(root) {
     const g = svgEl('g', { transform: `scale(${ed.zoom})` });
     svg.append(g);
 
-    // grid
     for (let x = 0; x <= CANVAS_W; x += GRID) g.append(svgEl('line', { x1: x, y1: 0, x2: x, y2: CANVAS_H, stroke: '#eef2f3', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }));
     for (let y = 0; y <= CANVAS_H; y += GRID) g.append(svgEl('line', { x1: 0, y1: y, x2: CANVAS_W, y2: y, stroke: '#eef2f3', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }));
 
@@ -108,10 +126,12 @@ export default function render(root) {
       }
     }
 
-    // walls
+    // walls + furniture
     for (const wl of walls) {
+      const furn = wl.kind === 'furniture';
       const selected = ed.sel && ed.sel.type === 'plan_walls' && ed.sel.id === wl.id;
-      const line = svgEl('line', { x1: wl.x1, y1: wl.y1, x2: wl.x2, y2: wl.y2, stroke: selected ? 'var(--teal)' : '#4f483d', 'stroke-width': 6, 'stroke-linecap': 'round', style: { cursor: 'move' } });
+      const stroke = selected ? 'var(--teal)' : (furn ? '#a9895f' : '#4f483d');
+      const line = svgEl('line', { x1: wl.x1, y1: wl.y1, x2: wl.x2, y2: wl.y2, stroke, 'stroke-width': furn ? 3 : 6, 'stroke-linecap': 'round', 'stroke-dasharray': furn ? '2 5' : '', style: { cursor: 'move' } });
       line.addEventListener('mousedown', (e) => { e.stopPropagation(); ed.sel = { type: 'plan_walls', id: wl.id };
         const o = { x1: wl.x1, y1: wl.y1, x2: wl.x2, y2: wl.y2 };
         drag(svg, g, e, (dx, dy) => { line.setAttribute('x1', o.x1 + dx); line.setAttribute('y1', o.y1 + dy); line.setAttribute('x2', o.x2 + dx); line.setAttribute('y2', o.y2 + dy); },
@@ -119,7 +139,7 @@ export default function render(root) {
       g.append(line);
       if (ed.showDims) {
         const len = Math.hypot(wl.x2 - wl.x1, wl.y2 - wl.y1);
-        g.append(svgEl('text', { x: (wl.x1 + wl.x2) / 2, y: (wl.y1 + wl.y2) / 2 - 8, 'text-anchor': 'middle', fill: '#4f483d', 'font-size': 10, style: { pointerEvents: 'none' } }, metres(len)));
+        g.append(svgEl('text', { x: (wl.x1 + wl.x2) / 2, y: (wl.y1 + wl.y2) / 2 - 8, 'text-anchor': 'middle', fill: furn ? '#a9895f' : '#4f483d', 'font-size': 10, style: { pointerEvents: 'none' } }, metres(len)));
       }
       if (selected) {
         for (const [ex, ey, k1, k2] of [[wl.x1, wl.y1, 'x1', 'y1'], [wl.x2, wl.y2, 'x2', 'y2']]) {
@@ -137,39 +157,49 @@ export default function render(root) {
       canvasCard.append(h('div', { class: 'hint', style: { position: 'absolute', left: 0, right: 0, top: '55%', textAlign: 'center', padding: '0 40px' } }, t('planEmptyHint')));
     }
 
-    // selected element actions (delete) + underlay opacity
+    // --- header: floor switch + measurement fields + save/clear ---------------
     const dimInput = (val, onSet) => h('input', { type: 'number', step: '0.05', min: '0.1', value: val,
       class: 'field', style: { width: '70px', padding: '5px 8px', fontSize: '12px' },
       onchange: (e) => { const m = Number(e.target.value); if (m > 0) onSet(m); } });
 
-    const sideBits = [];
-    // Precise measurement entry for the selected element (metres → pixels).
+    const bits = [];
     if (ed.sel && ed.sel.type === 'plan_walls') {
       const w = coll('plan_walls').find((x) => x.id === ed.sel.id);
-      if (w) {
-        const L = Math.hypot(w.x2 - w.x1, w.y2 - w.y1) || 1;
-        sideBits.push(h('label', { class: 'hint', style: { display: 'flex', gap: '4px', alignItems: 'center' } }, t('length'),
-          dimInput((L / scale).toFixed(2), (m) => {
-            const ux = (w.x2 - w.x1) / L, uy = (w.y2 - w.y1) / L, npx = m * scale;
-            store.update('plan_walls', w.id, { x2: Math.round(w.x1 + ux * npx), y2: Math.round(w.y1 + uy * npx) });
-          }), 'm'));
-      }
+      if (w) { const L = Math.hypot(w.x2 - w.x1, w.y2 - w.y1) || 1;
+        bits.push(h('label', { class: 'hint', style: { display: 'flex', gap: '4px', alignItems: 'center' } }, t('length'),
+          dimInput((L / scale).toFixed(2), (m) => { const ux = (w.x2 - w.x1) / L, uy = (w.y2 - w.y1) / L, npx = m * scale;
+            store.update('plan_walls', w.id, { x2: Math.round(w.x1 + ux * npx), y2: Math.round(w.y1 + uy * npx) }); }), 'm')); }
     }
     if (ed.sel && ed.sel.type === 'plan_rooms') {
       const rm = coll('plan_rooms').find((x) => x.id === ed.sel.id);
-      if (rm) sideBits.push(h('label', { class: 'hint', style: { display: 'flex', gap: '4px', alignItems: 'center' } },
+      if (rm) bits.push(h('label', { class: 'hint', style: { display: 'flex', gap: '4px', alignItems: 'center' } },
         dimInput((rm.w / scale).toFixed(2), (m) => store.update('plan_rooms', rm.id, { w: Math.round(m * scale) })), '×',
         dimInput((rm.h / scale).toFixed(2), (m) => store.update('plan_rooms', rm.id, { h: Math.round(m * scale) })), 'm'));
     }
-    if (ed.sel) sideBits.push(h('button', { class: 'btn-ghost', onclick: () => { store.remove(ed.sel.type, ed.sel.id); ed.sel = null; } }, t('delete')));
-    if (underlay) sideBits.push(h('label', { class: 'hint', style: { display: 'flex', gap: '6px', alignItems: 'center' } }, t('showDims'),
-      h('input', { type: 'range', min: 0.1, max: 1, step: 0.05, value: underlay.opacity ?? 0.6, style: { accentColor: 'var(--teal)' }, onchange: (e) => store.update('plan_underlays', underlay.id, { opacity: Number(e.target.value) }) }),
-      h('button', { class: 'del-btn', onclick: () => store.remove('plan_underlays', underlay.id) }, '×')));
+    if (ed.sel) bits.push(h('button', { class: 'btn-ghost', onclick: () => { const s = ed.sel; ed.sel = null; store.remove(s.type, s.id); } }, '␡ ' + t('delete')));
 
-    const parts = [h('div', { class: 'row-between' }, h('h1', { class: 'page-title', style: { flex: 1 } }, t('navPlan')),
-      ...sideBits), h('div', { class: 'hint' }, t('planHint')), canvasCard];
+    const floorChips = h('div', { style: { display: 'flex', gap: '4px' } },
+      [[0, t('ground')], [1, t('upper')]].map(([lvl, label]) =>
+        h('button', { class: 'chip' + (ed.floor === lvl ? ' active' : ''), onclick: () => { ed.floor = lvl; ed.sel = null; rebuild(); } }, label)));
 
-    root.append(h('section', { class: 'section' }, ...parts));
+    const save = h('button', { class: 'btn', style: { borderRadius: '8px' }, title: t('saveHint'),
+      onclick: async () => { ed.savedFlash = true; rebuild(); await store.loadData(); await new Promise((r) => setTimeout(r, 900)); ed.savedFlash = false; store.rerender(); } },
+      ed.savedFlash ? '✓ ' + t('saved') : t('save'));
+
+    const clear = h('button', { class: 'btn-ghost', style: { color: 'var(--accent)' },
+      onclick: () => {
+        const ids = { plan_rooms: rooms.map((r) => r.id), plan_walls: walls.map((w) => w.id), plan_underlays: coll('plan_underlays').filter((u) => onFloor(u)).map((u) => u.id) };
+        const total = ids.plan_rooms.length + ids.plan_walls.length + ids.plan_underlays.length;
+        if (!total || !window.confirm(t('confirmClearFloor'))) return;
+        ed.sel = null;
+        store.mutate(async () => { for (const c of Object.keys(ids)) if (ids[c].length) await api.bulkDelete(c, ids[c]); });
+      } }, '🗑 ' + t('clearFloor'));
+
+    const header = h('div', { class: 'row-between' },
+      h('h1', { class: 'page-title' }, t('navPlan')),
+      h('div', { style: { display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' } }, floorChips, ...bits, save, clear));
+
+    root.append(h('section', { class: 'section' }, header, h('div', { class: 'hint' }, t('planHint')), canvasCard));
   }
   build();
 }

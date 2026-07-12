@@ -27,6 +27,7 @@ export const api = {
   getData: () => req('GET', '/data'),
   create: (collection, item) => req('POST', '/' + collection, item),
   bulkCreate: (collection, items) => req('POST', `/${collection}/bulk`, items),
+  bulkDelete: (collection, ids) => req('POST', `/${collection}/bulk_delete`, ids),
   update: (collection, id, patch) => req('PATCH', `/${collection}/${id}`, patch),
   remove: (collection, id) => req('DELETE', `/${collection}/${id}`),
 

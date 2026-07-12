@@ -44,6 +44,19 @@ def bulk_create_items(collection: str, items: list[dict] = Body(...), db: Sessio
     return crud.bulk_create(db, collection, items)
 
 
+@router.post("/{collection}/bulk_delete")
+def bulk_delete_items(
+    collection: str,
+    ids: list[str] = Body(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    _check(collection)
+    if user.role != "admin":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "members cannot delete")
+    return {"deleted": crud.bulk_delete(db, collection, ids)}
+
+
 @router.post("/{collection}")
 def create_item(collection: str, body: dict = Body(...), db: Session = Depends(get_db)):
     _check(collection)

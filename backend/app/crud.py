@@ -110,6 +110,15 @@ def bulk_create(db: Session, collection: str, items: list[dict]) -> list[dict]:
     return [serialize(collection, r) for r in rows]
 
 
+def bulk_delete(db: Session, collection: str, ids: list[str]) -> int:
+    model = REGISTRY[collection]
+    if not ids:
+        return 0
+    n = db.query(model).filter(model.id.in_(ids)).delete(synchronize_session=False)
+    db.commit()
+    return n
+
+
 def update(db: Session, collection: str, rid: str, patch: dict) -> dict | None:
     model = REGISTRY[collection]
     row = db.get(model, rid)
