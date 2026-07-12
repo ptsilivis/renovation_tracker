@@ -33,6 +33,8 @@ export const api = {
   login: (email, password) => req('POST', '/auth/login', { email, password }),
   logout: () => req('POST', '/auth/logout'),
   me: () => req('GET', '/auth/me'),
+  changePassword: (current_password, new_password) =>
+    req('POST', '/auth/change-password', { current_password, new_password }),
 
   // projects (the top-level scope; not project-scoped themselves)
   listProjects: () => req('GET', '/projects'),

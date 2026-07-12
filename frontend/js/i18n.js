@@ -17,6 +17,13 @@ const DICT = {
     pickProject: 'Επιλέξτε έργο', newProject: 'Νέο έργο', projectName: 'Όνομα έργου',
     changeProject: 'Αλλαγή έργου', rename: 'Μετονομασία', confirmDelete: 'Σίγουρα;',
 
+    // change password
+    changePassword: 'Αλλαγή κωδικού', currentPassword: 'Τρέχων κωδικός',
+    newPassword: 'Νέος κωδικός', confirmPassword: 'Επιβεβαίωση κωδικού',
+    pwTooShort: 'Ο κωδικός πρέπει να έχει τουλάχιστον 10 χαρακτήρες.',
+    pwMismatch: 'Οι κωδικοί δεν ταιριάζουν.', pwChanged: 'Ο κωδικός άλλαξε.',
+    pwSaveErr: 'Αποτυχία αλλαγής κωδικού.',
+
     // overview
     statBudget: 'Προϋπολογισμός', statSpent: 'Δαπανήθηκε', statRemaining: 'Υπόλοιπο',
     statProgress: 'Πρόοδος εργασιών', editHint: 'Πατήστε για επεξεργασία',
@@ -78,6 +85,13 @@ const DICT = {
     // project picker
     pickProject: 'Choose a project', newProject: 'New project', projectName: 'Project name',
     changeProject: 'Change project', rename: 'Rename', confirmDelete: 'Sure?',
+
+    // change password
+    changePassword: 'Change password', currentPassword: 'Current password',
+    newPassword: 'New password', confirmPassword: 'Confirm password',
+    pwTooShort: 'Password must be at least 10 characters.',
+    pwMismatch: 'Passwords do not match.', pwChanged: 'Password changed.',
+    pwSaveErr: 'Could not change password.',
 
     statBudget: 'Budget', statSpent: 'Spent', statRemaining: 'Remaining',
     statProgress: 'Task progress', editHint: 'Click to edit',

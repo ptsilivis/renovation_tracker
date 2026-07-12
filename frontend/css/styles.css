@@ -311,3 +311,17 @@ main.main > section { animation: kh-fade var(--dur-2) var(--ease) both; }
 .proj-plus { font-size: 30px; line-height: 1; font-weight: 400; }
 .proj-form { cursor: default; gap: 8px; }
 .proj-form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+
+/* ---- modal (change password) ---- */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(23,43,49,0.45); backdrop-filter: blur(2px);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.modal {
+  width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 10px;
+  animation: kh-rise 200ms var(--ease) both;
+}
+.modal h2 { margin: 0 0 4px; font-size: 20px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+.pw-ok { padding: 12px 4px; color: var(--ok); font-weight: 600; }

@@ -55,6 +55,7 @@ function renderHeader() {
   const langBtn = h('button', { class: 'lang-btn', onclick: () => setLang(state.lang === 'el' ? 'en' : 'el') },
     state.lang === 'el' ? 'EN' : 'ΕΛ');
   const switchBtn = h('button', { class: 'icon-btn', title: t('changeProject'), onclick: () => { clearProject(); location.hash = ''; renderApp(); } }, '⌂');
+  const pwBtn = h('button', { class: 'icon-btn', title: t('changePassword'), onclick: openPasswordModal }, '🔑');
   const logoutBtn = h('button', { class: 'icon-btn', onclick: async () => { await api.logout(); location.reload(); } }, t('logout'));
 
   const projName = proj ? proj.name : '';
@@ -67,10 +68,53 @@ function renderHeader() {
       nav,
       h('div', { class: 'hdr-right' },
         h('span', { class: 'role-badge' }, state.user ? state.user.display_name : ''),
-        switchBtn, langBtn, logoutBtn,
+        switchBtn, pwBtn, langBtn, logoutBtn,
       ),
     ),
   );
+}
+
+// Change-password modal — every user sets their own strong password (min 10).
+function openPasswordModal() {
+  const err = h('div', { class: 'login-err' });
+  const cur = h('input', { class: 'field', type: 'password', placeholder: t('currentPassword'), autocomplete: 'current-password' });
+  const np = h('input', { class: 'field', type: 'password', placeholder: t('newPassword'), autocomplete: 'new-password' });
+  const cp = h('input', { class: 'field', type: 'password', placeholder: t('confirmPassword'), autocomplete: 'new-password' });
+  const overlay = h('div', { class: 'modal-overlay' });
+  const close = () => overlay.remove();
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); } });
+
+  const btn = h('button', { class: 'btn', type: 'submit' }, t('save'));
+  const submit = async (e) => {
+    e.preventDefault();
+    err.textContent = '';
+    if (np.value.length < 10) { err.textContent = t('pwTooShort'); return; }
+    if (np.value !== cp.value) { err.textContent = t('pwMismatch'); return; }
+    btn.disabled = true;
+    try {
+      await api.changePassword(cur.value, np.value);
+      form.replaceChildren(h('div', { class: 'pw-ok' }, '✓ ' + t('pwChanged')));
+      setTimeout(close, 1400);
+    } catch (ex) {
+      err.textContent = (ex && ex.message) || t('pwSaveErr');
+      btn.disabled = false;
+    }
+  };
+  const form = h('form', { class: 'card card-pad modal', onsubmit: submit },
+    h('h2', {}, t('changePassword')),
+    h('label', { class: 'stat-label' }, t('currentPassword')), cur,
+    h('label', { class: 'stat-label' }, t('newPassword')), np,
+    h('label', { class: 'stat-label' }, t('confirmPassword')), cp,
+    err,
+    h('div', { class: 'modal-actions' },
+      h('button', { class: 'btn-ghost', type: 'button', onclick: close }, t('cancel')),
+      btn,
+    ),
+  );
+  overlay.append(form);
+  appEl.append(overlay);
+  cur.focus();
 }
 
 function renderApp() {
