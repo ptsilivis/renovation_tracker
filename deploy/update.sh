@@ -20,7 +20,18 @@ echo "▶ Applying database migrations…"
 echo "▶ Restarting $SERVICE…"
 sudo systemctl restart "$SERVICE"
 
-sleep 2
+# Poll the health endpoint — the service can take several seconds to import and
+# bind on a slow host, so retry rather than failing on a single early probe.
 echo -n "▶ Health check: "
-curl -fsS http://localhost:8000/api/health && echo
-echo "✔ Update complete."
+for _ in $(seq 1 20); do
+  if curl -fsS http://localhost:8000/api/health; then
+    echo; echo "✔ Update complete."; exit 0
+  fi
+  sleep 1
+done
+
+echo
+echo "✖ $SERVICE did not answer on :8000 within 20s."
+echo "  Inspect it with: sudo systemctl status $SERVICE --no-pager"
+echo "               and: sudo journalctl -u $SERVICE -n 60 --no-pager"
+exit 1

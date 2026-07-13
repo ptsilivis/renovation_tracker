@@ -10,7 +10,9 @@
   <link rel="stylesheet" href="/css/styles.css">
   <!-- Import map so three.js addons (which `import ... from "three"`) resolve.
        Only fetched when the floor-plan GLB viewer is actually used. -->
-  <script type="importmap">
+  <!-- data-cfasync="false" keeps Cloudflare Rocket Loader from rewriting the ES
+       module scripts (it breaks module loading + injects a mismatched preload). -->
+  <script type="importmap" data-cfasync="false">
   {
     "imports": {
       "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -21,6 +23,6 @@
 </head>
 <body>
   <div id="app"><div class="boot">…</div></div>
-  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="/js/app.js" data-cfasync="false"></script>
 </body>
 </html>

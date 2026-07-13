@@ -20,6 +20,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# The frontend is a no-build ES-module app: index.html + /js/*.js + /css/*.css.
+# StaticFiles only sends ETag/Last-Modified, so a CDN (Cloudflare) will happily
+# serve a stale build after a deploy. Force revalidation on these assets so the
+# browser/edge re-check (cheap 304 when unchanged, fresh 200 right after deploy).
+@app.middleware("http")
+async def revalidate_frontend(request, call_next):
+    resp = await call_next(request)
+    p = request.url.path
+    if request.method in ("GET", "HEAD") and (
+        p == "/" or p.endswith(".html") or p.startswith("/js/") or p.startswith("/css/")
+    ):
+        resp.headers["Cache-Control"] = "no-cache"
+    return resp
+
+
 app.include_router(auth.router)
 # Explicit routes (projects, meta, files) must be registered before the generic
 # /api/{collection} CRUD catch-all so paths like /api/projects and /api/files win.
