@@ -1,4 +1,4 @@
-# RenovationHub — Product Requirements Document
+# RenoHub — Product Requirements Document
 
 **Status:** Draft (decisions locked 2026-07-11)
 **Owner:** Panos Tsilivis
@@ -8,7 +8,7 @@
 
 ## 1. Purpose
 
-RenovationHub is a shared web dashboard for tracking home-renovation projects. It
+RenoHub is a shared web dashboard for tracking home-renovation projects. It
 centralises **financial tracking** (planned vs. actual costs) and **project
 activities** (tasks, phase timeline, design ideas, floor plan) so that a small
 group shares a single source of truth instead of scattered chats, spreadsheets,

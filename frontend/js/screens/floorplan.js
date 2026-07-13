@@ -118,8 +118,8 @@ export default function render(root) {
     svg.append(g);
     const itemMap = new Map(); // key -> { type, id, base, move(dx,dy), patch(dx,dy) }
 
-    for (let x = 0; x <= CANVAS_W; x += GRID) g.append(svgEl('line', { x1: x, y1: 0, x2: x, y2: CANVAS_H, stroke: '#eef2f3', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }));
-    for (let y = 0; y <= CANVAS_H; y += GRID) g.append(svgEl('line', { x1: 0, y1: y, x2: CANVAS_W, y2: y, stroke: '#eef2f3', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }));
+    for (let x = 0; x <= CANVAS_W; x += GRID) g.append(svgEl('line', { x1: x, y1: 0, x2: x, y2: CANVAS_H, stroke: '#eef0f3', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }));
+    for (let y = 0; y <= CANVAS_H; y += GRID) g.append(svgEl('line', { x1: 0, y1: y, x2: CANVAS_W, y2: y, stroke: '#eef0f3', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }));
     if (underlay) g.append(svgEl('image', { href: '/files/' + underlay.file, x: 0, y: 0, width: underlay.w || CANVAS_W, height: underlay.h || CANVAS_H, opacity: underlay.opacity ?? 0.6, preserveAspectRatio: 'none', style: { pointerEvents: 'none' } }));
 
     // Start a (possibly group) move when pressing a selected element.
@@ -141,9 +141,9 @@ export default function render(root) {
     for (const rm of rooms) {
       const sel = isSel('plan_rooms', rm.id);
       const gEl = svgEl('g', {});
-      const rect = svgEl('rect', { x: rm.x, y: rm.y, width: rm.w, height: rm.h, rx: 4, fill: 'rgba(31,78,95,0.08)', stroke: sel ? 'var(--teal)' : '#8fa9b2', 'stroke-width': sel ? 2 : 1.5, 'vector-effect': 'non-scaling-stroke', style: { cursor: 'move' } });
+      const rect = svgEl('rect', { x: rm.x, y: rm.y, width: rm.w, height: rm.h, rx: 4, fill: sel ? 'rgba(43,91,215,0.10)' : 'rgba(43,91,215,0.045)', stroke: sel ? 'var(--teal)' : '#9aa5b1', 'stroke-width': sel ? 2 : 1.5, 'vector-effect': 'non-scaling-stroke', style: { cursor: 'move' } });
       gEl.append(rect,
-        svgEl('text', { x: rm.x + rm.w / 2, y: rm.y + rm.h / 2, 'text-anchor': 'middle', fill: '#35606e', 'font-weight': 700, 'font-size': 13, style: { pointerEvents: 'none' } }, rm.name || ''));
+        svgEl('text', { x: rm.x + rm.w / 2, y: rm.y + rm.h / 2, 'text-anchor': 'middle', fill: '#2450b8', 'font-weight': 700, 'font-size': 13, style: { pointerEvents: 'none' } }, rm.name || ''));
       if (ed.showDims) gEl.append(svgEl('text', { x: rm.x + rm.w / 2, y: rm.y + rm.h / 2 + 16, 'text-anchor': 'middle', fill: 'var(--muted2)', 'font-size': 10, style: { pointerEvents: 'none' } }, `${metres(rm.w)} × ${metres(rm.h)}`));
       const item = { type: 'plan_rooms', id: rm.id, gEl, base: { x: rm.x, y: rm.y }, patch: (dx, dy) => ({ x: Math.round(rm.x + dx), y: Math.round(rm.y + dy) }) };
       itemMap.set(selKey(item), item);
@@ -164,10 +164,10 @@ export default function render(root) {
       if (furn ? !ed.showFurniture : !ed.showWalls) continue; // visibility toggle
       const sel = isSel('plan_walls', wl.id);
       const gEl = svgEl('g', {});
-      const stroke = sel ? 'var(--teal)' : (furn ? '#a9895f' : '#4f483d');
+      const stroke = sel ? 'var(--teal)' : (furn ? '#6b7280' : '#171a20');
       const line = svgEl('line', { x1: wl.x1, y1: wl.y1, x2: wl.x2, y2: wl.y2, stroke, 'stroke-width': furn ? 3 : 6, 'stroke-linecap': 'round', 'stroke-dasharray': furn ? '2 5' : '', style: { cursor: 'move' } });
       gEl.append(line);
-      if (ed.showDims) gEl.append(svgEl('text', { x: (wl.x1 + wl.x2) / 2, y: (wl.y1 + wl.y2) / 2 - 8, 'text-anchor': 'middle', fill: furn ? '#a9895f' : '#4f483d', 'font-size': 10, style: { pointerEvents: 'none' } }, metres(Math.hypot(wl.x2 - wl.x1, wl.y2 - wl.y1))));
+      if (ed.showDims) gEl.append(svgEl('text', { x: (wl.x1 + wl.x2) / 2, y: (wl.y1 + wl.y2) / 2 - 8, 'text-anchor': 'middle', fill: furn ? '#6b7280' : '#171a20', 'font-size': 10, style: { pointerEvents: 'none' } }, metres(Math.hypot(wl.x2 - wl.x1, wl.y2 - wl.y1))));
       const item = { type: 'plan_walls', id: wl.id, gEl, base: { x1: wl.x1, y1: wl.y1, x2: wl.x2, y2: wl.y2 },
         patch: (dx, dy) => ({ x1: Math.round(wl.x1 + dx), y1: Math.round(wl.y1 + dy), x2: Math.round(wl.x2 + dx), y2: Math.round(wl.y2 + dy) }) };
       itemMap.set(selKey(item), item);
@@ -244,7 +244,7 @@ export default function render(root) {
       onclick: async () => { ed.savedFlash = true; rebuild(); await store.loadData(); await new Promise((r) => setTimeout(r, 900)); ed.savedFlash = false; store.rerender(); } },
       ed.savedFlash ? '✓ ' + t('saved') : t('save'));
 
-    const clear = h('button', { class: 'btn-ghost', style: { color: 'var(--accent)' }, onclick: () => {
+    const clear = h('button', { class: 'btn-ghost', style: { color: 'var(--danger)' }, onclick: () => {
       const ids = { plan_rooms: rooms.map((r) => r.id), plan_walls: walls.map((w) => w.id), plan_underlays: coll('plan_underlays').filter(onFloor).map((u) => u.id) };
       const total = ids.plan_rooms.length + ids.plan_walls.length + ids.plan_underlays.length;
       if (!total || !window.confirm(t('confirmClearFloor'))) return;

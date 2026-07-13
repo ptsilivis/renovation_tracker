@@ -86,7 +86,7 @@ export default function render(root) {
       c.p += Number(r.planned_cost) || 0; c.a += Number(r.actual_cost) || 0;
       byCat.set(r.category_id, c); gp += Number(r.planned_cost) || 0; ga += Number(r.actual_cost) || 0;
     }
-    const totalRow = (name, p, a, bold) => h('div', { style: { display: 'grid', gridTemplateColumns: 'minmax(300px,2fr) 100px 100px 100px', borderBottom: '1px solid #eef1f2', background: bold ? '#f2f5f6' : '#fff' } },
+    const totalRow = (name, p, a, bold) => h('div', { style: { display: 'grid', gridTemplateColumns: 'minmax(300px,2fr) 100px 100px 100px', borderBottom: '1px solid #eef0f3', background: bold ? '#f0f2f5' : '#fff' } },
       h('div', { style: { padding: '8px 12px', fontWeight: bold ? 700 : 600 } }, name),
       h('div', { class: 'num tnum', style: { padding: '8px 12px', fontWeight: bold ? 700 : 500 } }, money(p)),
       h('div', { class: 'num tnum', style: { padding: '8px 12px', fontWeight: bold ? 700 : 500 } }, money(a)),

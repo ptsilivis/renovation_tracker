@@ -28,7 +28,7 @@ function card(item) {
     h('div', { style: { padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 } },
       h('div', { style: { display: 'flex', alignItems: 'flex-start', gap: '8px', justifyContent: 'space-between' } }, titleEl,
         room ? h('span', { class: 'role-badge', style: { flexShrink: 0 } }, room.name) : null),
-      item.comment ? h('div', { style: { fontSize: '12.5px', color: '#56666d', lineHeight: 1.4 } }, item.comment) : null,
+      item.comment ? h('div', { style: { fontSize: '12.5px', color: '#56606c', lineHeight: 1.4 } }, item.comment) : null,
       h('div', { style: { display: 'flex', alignItems: 'center', gap: '6px', marginTop: 'auto', paddingTop: '6px' } },
         h('button', { class: 'like-btn', onclick: () => store.update('moodboard_items', item.id, { likes: (item.likes || 0) + 1 }) }, '❤ ' + (item.likes || 0)),
         h('span', { style: { flex: 1 } }),

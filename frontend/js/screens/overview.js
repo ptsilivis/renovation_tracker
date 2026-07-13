@@ -13,7 +13,7 @@ function budgetCard(budget) {
     const input = h('input', {
       type: 'number', step: '100', value: budget, class: 'tnum', 'aria-label': t('statBudget'),
       style: { width: '100%', border: 'none', background: 'transparent', outline: 'none',
-        font: '700 26px/1.1 Literata, serif', color: 'var(--ink)', padding: '0 2px', borderRadius: '8px', boxShadow: 'inset 0 0 0 2px var(--teal)' },
+        font: '700 26px/1.1 Commissioner, sans-serif', color: 'var(--ink)', padding: '0 2px', borderRadius: '8px', boxShadow: 'inset 0 0 0 2px var(--teal)' },
     });
     const commit = () => {
       const v = Number(input.value);
@@ -57,28 +57,29 @@ function plannedVsActual() {
     return h('div', { class: 'pva-col' },
       h('span', { class: 'tnum', style: { fontSize: '10.5px', fontWeight: 700, color: vColor } }, variance(v)),
       h('div', { class: 'pva-bars' },
-        h('div', { class: 'pva-bar', title: money(r.planned), style: { height: (r.planned / max * 100) + '%', background: '#d7dfe2' } }),
+        h('div', { class: 'pva-bar', title: money(r.planned), style: { height: (r.planned / max * 100) + '%', background: '#d7dde4' } }),
         h('div', { class: 'pva-bar', title: money(r.actual), style: { height: (r.actual / max * 100) + '%', background: v > 0 ? 'var(--accent)' : 'var(--teal)' } })));
   }));
   const labels = h('div', { style: { display: 'flex', gap: '10px', marginTop: '6px' } }, rows.map((r) =>
     h('div', { style: { flex: '1', minWidth: 0, textAlign: 'center' } },
-      h('div', { title: r.name, style: { fontSize: '10.5px', fontWeight: 600, color: '#56666d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, r.name),
+      h('div', { title: r.name, style: { fontSize: '10.5px', fontWeight: 600, color: '#56606c', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, r.name),
       h('div', { class: 'tnum', style: { fontSize: '10px', color: 'var(--muted2)' } }, money(r.actual)))));
 
   return h('div', { class: 'card card-pad' },
     h('div', { class: 'row-between', style: { marginBottom: '14px' } },
       h('h2', { style: { margin: 0, fontSize: '14px' } }, t('plannedVsActual')),
       h('div', { class: 'legend' },
-        h('span', {}, h('span', { class: 'sw', style: { background: '#d7dfe2' } }), ' ' + t('planned')),
+        h('span', {}, h('span', { class: 'sw', style: { background: '#d7dde4' } }), ' ' + t('planned')),
         h('span', {}, h('span', { class: 'sw', style: { background: 'var(--teal)' } }), ' ' + t('actual')))),
     bars, labels);
 }
 
 const PRIO = { high: 0, medium: 1, low: 2 };
+// Blueprint palette is monochrome-blue — status reads via tint, not hue.
 const STATUS_STYLE = {
-  done: { bg: '#e6f0ea', color: 'var(--ok)', key: 'statusDone' },
-  in_progress: { bg: '#fbf1de', color: 'var(--warn)', key: 'statusInProgress' },
-  pending: { bg: '#eef1f2', color: 'var(--muted)', key: 'statusPending' },
+  done: { bg: '#e6ecf9', color: 'var(--teal)', key: 'statusDone' },
+  in_progress: { bg: '#e6ecf9', color: 'var(--teal)', key: 'statusInProgress' },
+  pending: { bg: 'var(--soft-bg)', color: 'var(--soft-ink)', key: 'statusPending' },
 };
 
 function nextTasks() {
@@ -104,7 +105,7 @@ function recentActivity() {
     h('div', {}, rows.map((a) => h('div', { style: { display: 'flex', gap: '10px', alignItems: 'baseline', marginBottom: '10px' } },
       h('span', { class: 'tnum', style: { fontSize: '11px', color: 'var(--muted2)', width: '52px', flexShrink: 0 } },
         new Date(a.ts).toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit' })),
-      h('span', { style: { fontSize: '12.5px', color: '#4f483d' } }, localName({ name_el: a.el, name_en: a.en }))))));
+      h('span', { style: { fontSize: '12.5px', color: '#454b55' } }, localName({ name_el: a.el, name_en: a.en }))))));
 }
 
 // A dismissible "getting started" checklist, shown on a fresh project until the

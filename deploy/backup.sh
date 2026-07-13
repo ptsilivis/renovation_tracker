@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Nightly backup for a RenovationHub host: dump the Postgres DB and archive the
+# Nightly backup for a RenoHub host: dump the Postgres DB and archive the
 # uploads directory, then prune anything older than the retention window.
 #
 # Usage:   ./deploy/backup.sh

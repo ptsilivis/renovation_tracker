@@ -20,7 +20,7 @@ const ui = { catManagerOpen: false, newCat: '' };
 function cellInput(row, field) {
   return h('input', {
     class: 'cell-input', value: row[field] ?? '', placeholder: '—',
-    style: field === 'title' ? { fontWeight: 600 } : { fontSize: '12.5px', color: '#56666d' },
+    style: field === 'title' ? { fontWeight: 600 } : { fontSize: '12.5px', color: '#56606c' },
     onchange: (e) => store.update('tasks', row.id, { [field]: e.target.value }),
   });
 }
@@ -50,7 +50,7 @@ function categoryManager(rebuild) {
     h('button', { class: 'del-btn', title: t('delete'), onclick: () => store.remove('categories', c.id) }, '×')));
   const newInput = h('input', { class: 'field', placeholder: t('newCategoryPlaceholder'), style: { flex: 1, maxWidth: '340px', padding: '7px 10px' }, value: ui.newCat, oninput: (e) => { ui.newCat = e.target.value; } });
   return h('div', { style: { background: 'var(--panel)', border: '1px solid var(--chip-line)', borderRadius: '14px', padding: '16px 18px' } },
-    h('div', { class: 'stat-label', style: { color: '#35606e', marginBottom: '10px' } }, t('categoriesTitle')),
+    h('div', { class: 'stat-label', style: { color: 'var(--soft-ink)', marginBottom: '10px' } }, t('categoriesTitle')),
     h('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px' } }, rows),
     h('div', { style: { display: 'flex', gap: '8px', marginTop: '12px' } }, newInput,
       h('button', { class: 'btn', style: { padding: '7px 16px', borderRadius: '8px' }, onclick: () => {

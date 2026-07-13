@@ -1,4 +1,4 @@
-"""RenovationHub API entrypoint."""
+"""RenoHub API entrypoint."""
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from .config import settings
 from .routers import auth, collections, files, meta, projects
 
-app = FastAPI(title="RenovationHub API")
+app = FastAPI(title="RenoHub API")
 
 # Same-origin in production (frontend served by this app). CORS is only needed
 # for local dev when the frontend is served from a different port.

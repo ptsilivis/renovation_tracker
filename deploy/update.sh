@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-command update for a RenovationHub host (e.g. the Raspberry Pi):
+# One-command update for a RenoHub host (e.g. the Raspberry Pi):
 # pull the latest code, apply any DB migrations, and restart the service.
 #
 # Usage:  ./deploy/update.sh

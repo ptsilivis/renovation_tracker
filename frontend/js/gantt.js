@@ -16,7 +16,7 @@ const idx = (s) => { const [y, m] = (s || '').split('-').map(Number); return y *
 const toStr = (i) => `${Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}`;
 const label = (i) => new Date(Math.floor(i / 12), i % 12, 1).toLocaleDateString(state.lang === 'en' ? 'en-GB' : 'el-GR', { month: 'short', year: '2-digit' });
 
-const COLORS = ['#1f4e5f', '#35606e', '#4d7a86', '#6d9aa2', '#8fb3b8', '#a4442f', '#c06a4f', '#7a8b52'];
+const COLORS = ['#2b5bd7', '#2b5bd7', '#5580e2', '#82a6ec', '#b0c4f4', '#6b7280', '#b9c2ce', '#2450b8'];
 
 // Drag helper: reports whole-month deltas relative to a track's pixel width.
 function dragMonths(ev, track, span, onDelta, onEnd) {
@@ -75,7 +75,7 @@ export function gantt() {
 
     const nameInput = h('input', {
       value: localName(p), 'aria-label': t('phaseName'),
-      style: { width: '100%', border: 'none', background: 'transparent', outline: 'none', font: '600 12px Noto Sans, sans-serif', color: '#4f483d', padding: '3px 4px', borderRadius: '6px' },
+      style: { width: '100%', border: 'none', background: 'transparent', outline: 'none', font: '600 12px Noto Sans, sans-serif', color: '#454b55', padding: '3px 4px', borderRadius: '6px' },
       onfocus: (e) => { e.target.style.boxShadow = 'inset 0 0 0 2px var(--teal)'; },
       onblur: (e) => { e.target.style.boxShadow = 'none'; },
       onchange: (e) => store.update('phases', p.id, { [state.lang === 'en' ? 'name_en' : 'name_el']: e.target.value }),

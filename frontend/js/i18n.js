@@ -4,13 +4,13 @@ import { state } from './state.js';
 
 const DICT = {
   el: {
-    appTitle: 'RenovationHub', appSubtitle: 'Παρακολούθηση ανακαίνισης',
+    appTitle: 'RenoHub', appSubtitle: 'Παρακολούθηση ανακαίνισης',
     navOverview: 'Επισκόπηση', navTasks: 'Εργασίες', navCosts: 'Κόστη',
     navMoodboard: 'Moodboard', navPlan: 'Κάτοψη', navMeasurements: 'Μετρήσεις',
     logout: 'Έξοδος',
 
     // login
-    loginTitle: 'RenovationHub', loginEmail: 'Email', loginPassword: 'Κωδικός',
+    loginTitle: 'RenoHub', loginEmail: 'Email', loginPassword: 'Κωδικός',
     loginBtn: 'Σύνδεση', loginError: 'Λάθος email ή κωδικός.',
 
     // project picker
@@ -81,14 +81,35 @@ const DICT = {
     importGlb: 'Εισαγωγή GLB', scale: 'Κλίμακα', scaleHint: 'Pixel ανά μέτρο — προσαρμόστε στις πραγματικές διαστάσεις', length: 'Μήκος',
 
     delete: 'Διαγραφή', floor: 'Όροφος', ground: 'Ισόγειο', upper: 'Α΄ όροφος',
+
+    // mobile shell
+    mHome: 'Αρχική', mCosts: 'Έξοδα', mAlbum: 'Άλμπουμ', mLoading: 'Φόρτωση δεδομένων…',
+    mSpent: 'Δαπάνες', mThisMonth: 'Αυτόν τον μήνα', mVsPlan: 'vs πλάνο',
+    mCurrentPhase: 'Τρέχουσα φάση', mUntil: 'έως', mFullTimeline: 'Πλήρες χρονοδιάγραμμα',
+    mNextTasks: 'Επόμενες εργασίες', mAll: 'Όλες',
+    mNow: 'ΤΩΡΑ', mCompleted: 'Ολοκληρώθηκε',
+    mProjectTotal: 'Σύνολο έργου', mPaid: 'Πληρωμένα', mPending: 'Εκκρεμή · πλάνο', mReceipt: 'απόδειξη',
+    mAlbumSub: 'Ιδέες και μετρήσεις του σπιτιού.', mIdeas: 'Ιδέες', mMeasures: 'Μετρήσεις',
+    mIdeaTag: 'ΙΔΕΑ', mMeasureTag: 'ΜΕΤΡΗΣΗ',
+    mAddTitle: 'Νέα καταχώρηση', mAddSub: 'Ό,τι κι αν είσαι μπροστά — 10 δευτερόλεπτα.',
+    mExpense: 'Έξοδο', mExpenseSub: 'Ποσό · κατηγορία · περιγραφή',
+    mTaskSub: 'Τίτλος · κατηγορία · συνεργείο', mMeasure: 'Μέτρηση', mMeasureSub: 'Διαστάσεις + χώρος',
+    mIdea: 'Ιδέα', mIdeaSub: 'Τίτλος ή link στο moodboard',
+    mPhoto: 'Φωτογραφία προόδου', mComingSoon: 'Έρχεται σύντομα', mBack: 'Πίσω',
+    mNewExpense: 'Νέο έξοδο', mAmountEur: 'ποσό σε €', mSaveExpense: 'Αποθήκευση εξόδου',
+    mDescPlaceholder: 'Περιγραφή (π.χ. Σωλήνες & ρακόρ)', mContractorOpt: 'Συνεργείο (προαιρετικό)',
+    mNewTask: 'Νέα εργασία', mTaskTitle: 'Τίτλος εργασίας', mSaveTask: 'Αποθήκευση εργασίας',
+    mNewMeasure: 'Νέα μέτρηση', mMeasureWhat: 'Τι μετράς; (π.χ. Τοίχος TV)', mSaveMeasure: 'Αποθήκευση μέτρησης', mFromPhone: 'Από κινητό',
+    mNewIdea: 'Νέα ιδέα', mIdeaTitle: 'Τίτλος (π.χ. Χρώμα τοίχου RAL 7044)', mIdeaComment: 'Σχόλιο ή link (προαιρετικό)', mSaveIdea: 'Αποθήκευση ιδέας',
+    mSavedToProject: 'Αποθηκεύεται στο έργο', mLanguage: 'Γλώσσα',
   },
   en: {
-    appTitle: 'RenovationHub', appSubtitle: 'Renovation tracker',
+    appTitle: 'RenoHub', appSubtitle: 'Renovation tracker',
     navOverview: 'Overview', navTasks: 'Tasks', navCosts: 'Costs',
     navMoodboard: 'Moodboard', navPlan: 'Floor plan', navMeasurements: 'Measurements',
     logout: 'Log out',
 
-    loginTitle: 'RenovationHub', loginEmail: 'Email', loginPassword: 'Password',
+    loginTitle: 'RenoHub', loginEmail: 'Email', loginPassword: 'Password',
     loginBtn: 'Sign in', loginError: 'Wrong email or password.',
 
     // project picker
@@ -153,6 +174,27 @@ const DICT = {
     importGlb: 'Import GLB', scale: 'Scale', scaleHint: 'Pixels per metre — tune to match real dimensions', length: 'Length',
 
     delete: 'Delete', floor: 'Floor', ground: 'Ground floor', upper: 'Upper floor',
+
+    // mobile shell
+    mHome: 'Home', mCosts: 'Costs', mAlbum: 'Album', mLoading: 'Loading data…',
+    mSpent: 'Spent', mThisMonth: 'This month', mVsPlan: 'vs plan',
+    mCurrentPhase: 'Current phase', mUntil: 'until', mFullTimeline: 'Full timeline',
+    mNextTasks: 'Next tasks', mAll: 'All',
+    mNow: 'NOW', mCompleted: 'Completed',
+    mProjectTotal: 'Project total', mPaid: 'Paid', mPending: 'Pending · plan', mReceipt: 'receipt',
+    mAlbumSub: 'Ideas and measurements of the house.', mIdeas: 'Ideas', mMeasures: 'Measurements',
+    mIdeaTag: 'IDEA', mMeasureTag: 'MEASURE',
+    mAddTitle: 'New entry', mAddSub: 'Whatever you’re looking at — 10 seconds.',
+    mExpense: 'Expense', mExpenseSub: 'Amount · category · description',
+    mTaskSub: 'Title · category · contractor', mMeasure: 'Measurement', mMeasureSub: 'Dimensions + room',
+    mIdea: 'Idea', mIdeaSub: 'Title or moodboard link',
+    mPhoto: 'Progress photo', mComingSoon: 'Coming soon', mBack: 'Back',
+    mNewExpense: 'New expense', mAmountEur: 'amount in €', mSaveExpense: 'Save expense',
+    mDescPlaceholder: 'Description (e.g. Pipes & fittings)', mContractorOpt: 'Contractor (optional)',
+    mNewTask: 'New task', mTaskTitle: 'Task title', mSaveTask: 'Save task',
+    mNewMeasure: 'New measurement', mMeasureWhat: 'What are you measuring? (e.g. TV wall)', mSaveMeasure: 'Save measurement', mFromPhone: 'From phone',
+    mNewIdea: 'New idea', mIdeaTitle: 'Title (e.g. Wall colour RAL 7044)', mIdeaComment: 'Comment or link (optional)', mSaveIdea: 'Save idea',
+    mSavedToProject: 'Saved to the project', mLanguage: 'Language',
   },
 };
 

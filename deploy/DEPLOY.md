@@ -1,4 +1,4 @@
-# Deploying RenovationHub on a Raspberry Pi
+# Deploying RenoHub on a Raspberry Pi
 
 Target: a Raspberry Pi (ARM64, Raspberry Pi OS / Debian) running PostgreSQL, the
 FastAPI app under systemd, and a **Cloudflare Tunnel** for free HTTPS remote access

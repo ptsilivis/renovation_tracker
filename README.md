@@ -1,4 +1,4 @@
-# RenovationHub
+# RenoHub
 
 A shared, self-hosted dashboard for tracking home-renovation projects — finances
 and activities in one place for the people working on them. Manage **multiple

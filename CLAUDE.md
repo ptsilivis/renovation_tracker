@@ -1,4 +1,4 @@
-# CLAUDE.md — RenovationHub
+# CLAUDE.md — RenoHub
 
 Shared dashboard for tracking home-renovation projects — finances + activities in
 one place. **Multi-project**: users pick/create a project on the first screen; all
@@ -57,8 +57,10 @@ deploy/
   sync. Do not add optimistic caching without reason.
 - `plan_rooms/walls/underlays` store free-form geometry in a JSONB `data` column;
   the API flattens them to `{id, ...data}`.
-- Money/measurements: `.tnum` (tabular numerals), `money()` formats €, variance
-  colored (over = terracotta `--accent`, under = green `--ok`).
+- Money/measurements: `.tnum` (tabular numerals, JetBrains Mono), `money()` formats €.
+  Theme is the **Blueprint** blue system (see `DESIGN.md`) — variance/status are
+  monochrome: over-budget = ink `--accent`, under = muted `--ok`, in-progress = blue
+  `--warn`. `--danger` is reserved for validation errors + destructive actions only.
 - Bilingual EL/EN: `i18n.js` `t(key)`; `localName(obj)` picks `name_el`/`name_en`.
   Data strings stay Greek; only chrome translates.
 - Roles: everyone is `admin`; the delete gate is still enforced server-side.

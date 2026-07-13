@@ -1,4 +1,4 @@
-# Product context — RenovationHub
+# Product context — RenoHub
 
 register: product
 
@@ -19,10 +19,12 @@ most: numbers must read cleanly and never feel like a flashy fintech pitch.
 
 ## Brand & tone
 
-Warm, calm, grounded in place. Aegean coastal palette: deep sea-teal with a
-terracotta accent on soft tinted-stone neutrals. Literata (a warm serif) for
-headings gives a human, letter-from-home feel; Noto Sans keeps data neutral and
-clear. The feeling is a well-kept household ledger, not a dashboard demo.
+Calm, precise, grounded. The **Blueprint** palette: a confident architect's blue
+(`#2b5bd7`) on cool near-white neutrals, with a restrained monochrome treatment of
+data (over-budget reads as ink, under as muted grey — no traffic-light colour).
+Commissioner (a clean geometric sans) for UI and headings; JetBrains Mono for every
+figure so numbers align like a spec sheet. The feeling is a well-kept household
+ledger drawn on drafting paper, not a dashboard demo.
 
 ## Anti-references
 
