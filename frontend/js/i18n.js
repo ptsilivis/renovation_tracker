@@ -52,6 +52,10 @@ const DICT = {
     plannedVsActual: 'Προϋπολογισμός vs Πραγματικό', planned: 'Πρόβλεψη', actual: 'Πραγματικό',
     nextTasks: 'Επόμενες εργασίες', recentActivity: 'Πρόσφατη δραστηριότητα',
     dashReorder: 'Σύρετε ⠿ για αναδιάταξη των πλαισίων.',
+    dashConfigure: 'Διαμόρφωση', dashDone: 'Τέλος', dashAddWidget: 'Προσθήκη πλαισίου',
+    dashDropHint: 'Σύρετε ⠿ σε μια θέση — οι διαθέσιμες θέσεις (αριστερά/δεξιά/νέα σειρά) τονίζονται.',
+    wStats: 'Προϋπολογισμός & πρόοδος', wTaskSummary: 'Σύνοψη εργασιών',
+    wCostByCat: 'Κόστος ανά κατηγορία', wRecentCosts: 'Πρόσφατα έξοδα', wContractors: 'Συνεργεία',
 
     // tasks
     manageCategories: 'Διαχείριση κατηγοριών', categoriesTitle: 'Κατηγορίες',
@@ -160,6 +164,10 @@ const DICT = {
     plannedVsActual: 'Planned vs Actual', planned: 'Planned', actual: 'Actual',
     nextTasks: 'Next tasks', recentActivity: 'Recent activity',
     dashReorder: 'Drag ⠿ to rearrange the panels.',
+    dashConfigure: 'Configure', dashDone: 'Done', dashAddWidget: 'Add a panel',
+    dashDropHint: 'Drag ⠿ onto a slot — the available spots (left / right / new row) are highlighted.',
+    wStats: 'Budget & progress', wTaskSummary: 'Task summary',
+    wCostByCat: 'Cost by category', wRecentCosts: 'Recent costs', wContractors: 'Contractors',
 
     manageCategories: 'Manage categories', categoriesTitle: 'Categories',
     newCategoryPlaceholder: 'New category…', add: 'Add', addTask: 'Task',
