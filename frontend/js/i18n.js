@@ -17,6 +17,15 @@ const DICT = {
     pickProject: 'Επιλέξτε έργο', newProject: 'Νέο έργο', projectName: 'Όνομα έργου',
     changeProject: 'Αλλαγή έργου', rename: 'Μετονομασία', confirmDelete: 'Σίγουρα;',
 
+    // new-project scope wizard
+    scopeQuestion: 'Τι περιλαμβάνει η ανακαίνιση;',
+    scopeHint: 'Ορίζει κατηγορίες & ενδεικτικές εργασίες — όλα επεξεργάσιμα αργότερα.',
+    scopeIndoorPaint: 'Βάψιμο εσωτερικών', scopeIndoorFloors: 'Αλλαγή δαπέδων',
+    scopeKitchen: 'Ανακαίνιση κουζίνας', scopeBathroom: 'Ανακαίνιση μπάνιου',
+    scopeFloors: 'Πόσοι όροφοι;', scopeOutdoor: 'Εξωτερικοί χώροι',
+    scopeOutdoorPaint: 'Εξωτερικές βαφές', scopeBalconies: 'Μπαλκόνια', scopeGarden: 'Κήπος',
+    createProjectErr: 'Αποτυχία δημιουργίας έργου.',
+
     // change password
     changePassword: 'Αλλαγή κωδικού', currentPassword: 'Τρέχων κωδικός',
     newPassword: 'Νέος κωδικός', confirmPassword: 'Επιβεβαίωση κωδικού',
@@ -115,6 +124,15 @@ const DICT = {
     // project picker
     pickProject: 'Choose a project', newProject: 'New project', projectName: 'Project name',
     changeProject: 'Change project', rename: 'Rename', confirmDelete: 'Sure?',
+
+    // new-project scope wizard
+    scopeQuestion: 'What does this renovation cover?',
+    scopeHint: 'Sets categories & sample tasks — all editable later.',
+    scopeIndoorPaint: 'Indoor painting', scopeIndoorFloors: 'New floors',
+    scopeKitchen: 'Kitchen remodel', scopeBathroom: 'Bathroom remodel',
+    scopeFloors: 'How many floors?', scopeOutdoor: 'Outdoor',
+    scopeOutdoorPaint: 'Exterior painting', scopeBalconies: 'Balconies', scopeGarden: 'Garden',
+    createProjectErr: 'Could not create project.',
 
     // change password
     changePassword: 'Change password', currentPassword: 'Current password',

@@ -7,7 +7,6 @@ import { t } from '../i18n.js';
 import { h, clear, money } from '../ui.js';
 
 export default function renderPicker(root) {
-  let adding = false;          // is the "new project" form open?
   let confirmingDelete = null; // id awaiting a second click to confirm delete
 
   const topbar = () => h('header', { class: 'hdr' },
@@ -68,33 +67,75 @@ export default function renderPicker(root) {
     input.select();
   }
 
-  const newCard = () => {
-    if (!adding) {
-      return h('button', { class: 'btn-dashed proj-card proj-new', onclick: () => { adding = true; draw(); } },
-        h('span', { class: 'proj-plus' }, '+'), t('newProject'));
-    }
+  const newCard = () =>
+    h('button', { class: 'btn-dashed proj-card proj-new', onclick: openWizard },
+      h('span', { class: 'proj-plus' }, '+'), t('newProject'));
+
+  // New-project wizard (modal): name + budget + what the renovation covers.
+  // The scope drives the default categories / phases / sample tasks server-side.
+  // Selections live in local DOM state (chips toggle their own class) so typing
+  // in the name/budget fields never triggers a re-render that would lose focus.
+  function openWizard() {
+    const sel = { types: new Set(), outdoor: new Set(), floors: 1 };
     const name = h('input', { class: 'field', placeholder: t('projectName') });
     const budget = h('input', { class: 'field', type: 'number', min: '0', placeholder: t('statBudget') + ' (€)' });
-    const create = async () => {
-      const nm = name.value.trim();
-      if (!nm) { name.focus(); return; }
-      const p = await api.createProject({ name: nm, total_budget: Number(budget.value) || 0 });
-      adding = false;
-      await loadProjects();
-      enterProject(p.id); // jump straight into the new project
+    const err = h('div', { class: 'login-err' });
+
+    const toggleChip = (setRef, key) => (e) => {
+      const on = setRef.has(key) ? (setRef.delete(key), false) : (setRef.add(key), true);
+      e.currentTarget.classList.toggle('active', on);
     };
-    name.addEventListener('keydown', (e) => { if (e.key === 'Enter') create(); if (e.key === 'Escape') { adding = false; draw(); } });
-    const form = h('div', { class: 'card card-pad proj-card proj-form' },
+    const chipRow = (defs, setRef) => h('div', { class: 'wiz-chips' },
+      defs.map(([key, label]) => h('button', { type: 'button', class: 'chip', onclick: toggleChip(setRef, key) }, t(label))));
+
+    const floorBtns = [1, 2, 3, 4].map((n) => h('button', {
+      type: 'button', class: 'chip' + (n === 1 ? ' active' : ''),
+      onclick: () => { sel.floors = n; floorBtns.forEach((b) => b.classList.remove('active')); floorBtns[n - 1].classList.add('active'); },
+    }, String(n)));
+
+    const overlay = h('div', { class: 'modal-overlay' });
+    const close = () => { overlay.remove(); document.removeEventListener('keydown', onEsc); };
+    const onEsc = (e) => { if (e.key === 'Escape') close(); };
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', onEsc);
+
+    const createBtn = h('button', { class: 'btn', type: 'submit' }, t('save'));
+    const create = async (e) => {
+      if (e) e.preventDefault();
+      const nm = name.value.trim();
+      if (!nm) { err.textContent = t('projectName'); name.focus(); return; }
+      createBtn.disabled = true;
+      try {
+        const p = await api.createProject({
+          name: nm, total_budget: Number(budget.value) || 0,
+          scope: { types: [...sel.types], floors: sel.floors, outdoor: [...sel.outdoor] },
+        });
+        close();
+        await loadProjects();
+        enterProject(p.id); // jump straight into the new project
+      } catch { err.textContent = t('createProjectErr'); createBtn.disabled = false; }
+    };
+
+    const form = h('form', { class: 'card card-pad modal modal-wide', onsubmit: create },
+      h('h2', {}, t('newProject')),
       h('label', { class: 'stat-label' }, t('projectName')), name,
       h('label', { class: 'stat-label' }, t('statBudget')), budget,
-      h('div', { class: 'proj-form-actions' },
-        h('button', { class: 'btn-ghost', onclick: () => { adding = false; draw(); } }, t('cancel')),
-        h('button', { class: 'btn', onclick: create }, t('save')),
-      ),
+      h('label', { class: 'stat-label' }, t('scopeQuestion')),
+      chipRow([['indoor_paint', 'scopeIndoorPaint'], ['indoor_floors', 'scopeIndoorFloors'], ['kitchen', 'scopeKitchen'], ['bathroom', 'scopeBathroom']], sel.types),
+      h('label', { class: 'stat-label' }, t('scopeFloors')),
+      h('div', { class: 'wiz-chips' }, floorBtns),
+      h('label', { class: 'stat-label' }, t('scopeOutdoor')),
+      chipRow([['outdoor_paint', 'scopeOutdoorPaint'], ['balconies', 'scopeBalconies'], ['garden', 'scopeGarden']], sel.outdoor),
+      h('div', { class: 'hint', style: { marginTop: '2px' } }, t('scopeHint')),
+      err,
+      h('div', { class: 'modal-actions' },
+        h('button', { class: 'btn-ghost', type: 'button', onclick: close }, t('cancel')),
+        createBtn),
     );
+    overlay.append(form);
+    root.append(overlay);
     setTimeout(() => name.focus(), 0);
-    return form;
-  };
+  }
 
   function draw() {
     const grid = h('div', { class: 'proj-grid' },

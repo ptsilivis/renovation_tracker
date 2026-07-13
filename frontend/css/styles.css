@@ -33,6 +33,7 @@
   --dur-2: 180ms;
   --dur-3: 400ms;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);  /* iOS-like sheet curve */
   --ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--teal);
 }
 * { box-sizing: border-box; }
@@ -162,7 +163,9 @@ select.field { padding: 8px 10px; }
 .gt-handle:hover { background: rgba(255,255,255,0.5); }
 .gt-milestone { position: absolute; top: 50%; width: 12px; height: 12px; background: var(--accent);
   transform: translate(-50%, -50%) rotate(45deg); border: 2px solid #fff; box-shadow: var(--shadow); cursor: pointer; }
-.gt-milestone:hover { transform: translate(-50%, -50%) rotate(45deg) scale(1.2); }
+@media (hover: hover) and (pointer: fine) {
+  .gt-milestone:hover { transform: translate(-50%, -50%) rotate(45deg) scale(1.2); }
+}
 .gt-grip { flex-shrink: 0; width: 16px; text-align: center; color: var(--muted2); cursor: grab;
   font-size: 13px; line-height: 1; user-select: none; touch-action: none; border-radius: 5px; }
 .gt-grip:hover { color: var(--teal); background: var(--panel); }
@@ -233,9 +236,13 @@ select.field { padding: 8px 10px; }
   transform: translateY(1px);
 }
 
-/* Primary button gains a soft branded shadow to sit above the surface. */
+/* Primary button gains a soft branded shadow, and a tactile scale on press
+   (stronger feedback than the translateY the secondary controls use). */
 .btn { box-shadow: 0 1px 3px rgba(23,26,32,0.15); }
-.btn:hover { box-shadow: 0 2px 8px -2px rgba(43,91,215,0.35); }
+.btn:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { box-shadow: 0 2px 8px -2px rgba(43,91,215,0.35); }
+}
 .btn:disabled, .btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
 /* Keyboard focus — inputs drop the native outline, so give a clear ring.
@@ -253,18 +260,23 @@ select.field { padding: 8px 10px; }
 /* Chip select press. */
 .chip:active { transform: scale(0.96); }
 
-/* Moodboard cards are gateways to links/photos — lift them on hover. */
+/* Moodboard cards are gateways to links/photos — lift them on hover.
+   Gated to fine-pointer devices so a tap on the phone doesn't stick the hover. */
 .mood-card { transition: box-shadow var(--dur-2) var(--ease), transform var(--dur-2) var(--ease); }
-.mood-card:hover { box-shadow: var(--shadow-lift); transform: translateY(-2px); }
 .mood-img { transition: transform var(--dur-3) var(--ease); }
-.mood-card:hover .mood-img { transform: scale(1.03); }
+@media (hover: hover) and (pointer: fine) {
+  .mood-card:hover { box-shadow: var(--shadow-lift); transform: translateY(-2px); }
+  .mood-card:hover .mood-img { transform: scale(1.03); }
+}
 
 /* Like button: neutral fill + a quick press pop. */
 .like-btn:hover { background: var(--accent-soft); color: var(--ink); border-color: var(--chip-line); }
 .like-btn:active { transform: scale(1.12); }
 
-/* Delete button rotates its × faintly on hover for a bit of life. */
-.del-btn:hover { transform: rotate(90deg); }
+/* Delete button rotates its × faintly on hover for a bit of life (fine-pointer only). */
+@media (hover: hover) and (pointer: fine) {
+  .del-btn:hover { transform: rotate(90deg); }
+}
 
 /* Stat bars grow into place; number/measure reveal, not layout choreography. */
 .bar-fill { transition: width var(--dur-3) var(--ease), background-color var(--dur-2) var(--ease); }
@@ -308,13 +320,21 @@ main.main > section { animation: kh-fade var(--dur-2) var(--ease) both; }
   display: flex; flex-direction: column; gap: 6px; min-height: 132px;
   transition: transform var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease);
 }
-.proj-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); }
+.proj-card:active { transform: scale(0.99); }
+@media (hover: hover) and (pointer: fine) {
+  .proj-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); }
+}
 .proj-name { font-family: 'Commissioner', sans-serif; font-weight: 700; font-size: 19px; }
 .proj-desc { font-size: 12px; line-height: 1.4; }
 .proj-budget { margin-top: auto; font-size: 20px; font-weight: 700; color: var(--teal); }
 .muted { color: var(--muted); }
-.proj-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 4px; opacity: 0; transition: opacity var(--dur-1) var(--ease); }
-.proj-card:hover .proj-actions { opacity: 1; }
+/* Actions are always visible on touch (no hover to reveal them); on fine-pointer
+   devices they stay hidden until the card is hovered. */
+.proj-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 4px; opacity: 1; transition: opacity var(--dur-1) var(--ease); }
+@media (hover: hover) and (pointer: fine) {
+  .proj-actions { opacity: 0; }
+  .proj-card:hover .proj-actions { opacity: 1; }
+}
 .proj-new { align-items: center; justify-content: center; gap: 8px; color: var(--muted); font-weight: 600; }
 .proj-plus { font-size: 30px; line-height: 1; font-weight: 400; }
 .proj-form { cursor: default; gap: 8px; }
@@ -331,6 +351,9 @@ main.main > section { animation: kh-fade var(--dur-2) var(--ease) both; }
   animation: kh-rise 200ms var(--ease) both;
 }
 .modal h2 { margin: 0 0 4px; font-size: 20px; }
+.modal.modal-wide { max-width: 460px; max-height: calc(100dvh - 48px); overflow-y: auto; }
+.wiz-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.wiz-chips .chip { font-size: 13px; }
 .modal-msg { font-size: 12.5px; margin-bottom: 4px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
 .pw-ok { padding: 12px 4px; color: var(--teal); font-weight: 600; }
@@ -457,3 +480,28 @@ main.main > section { animation: kh-fade var(--dur-2) var(--ease) both; }
 .m-field:focus { border-color: var(--teal); }
 .m-amount { border: none; text-align: center; font-weight: 700; font-size: 44px; padding: 8px 0; margin-bottom: 0; }
 .m-save { background: var(--teal); color: #fff; border-radius: 14px; padding: 16px; text-align: center; font-weight: 800; font-size: 15px; cursor: pointer; margin-top: 6px; box-shadow: 0 8px 18px rgba(31,78,95,0.3); }
+
+/* ---- phone shell motion: press feedback + sheet/tab transitions ---- */
+/* Every tappable surface confirms the press with a subtle scale (Apple: feedback
+   on pointer-down, instant). Kept off the disabled "coming soon" menu row. */
+.m-fab, .m-nav-item, .m-circle, .m-home-hd, .m-phase,
+.m-menu-row:not(.dim), .m-save, .m-pill-teal {
+  transition: transform var(--dur-1) var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.m-nav-item:active, .m-circle:active, .m-home-hd:active,
+.m-phase:active, .m-menu-row:not(.dim):active { transform: scale(0.97); }
+.m-save:active { transform: scale(0.98); }
+.m-fab:active { transform: scale(0.92); }
+
+/* Bottom sheet: slide up from its own height on the iOS drawer curve, with the
+   scrim fading in underneath. Enter/exit share the path (spatial consistency). */
+@keyframes m-sheet-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes m-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+/* Only on open (.m-anim-sheet) — not when swapping sub-sheets (menu → expense). */
+.m-sheet.m-anim-sheet { animation: m-sheet-in var(--dur-3) var(--ease-drawer) both; }
+.m-overlay.m-anim-sheet { animation: m-overlay-in var(--dur-2) var(--ease) both; }
+
+/* Tab change: content fades in (only when .m-anim is set on a real tab switch,
+   never on a mutation re-render), matching the desktop route transition. */
+.m-screen.m-anim { animation: kh-fade var(--dur-2) var(--ease) both; }

@@ -14,6 +14,9 @@ import { openPasswordModal } from './password.js';
 // mutations trigger (write → refetch → renderApp → renderMobile).
 const mob = { tab: 'home', sheet: null, account: false }; // sheet: null|menu|expense|task|measure|idea
 let _root = null;
+let _lastTab = null;
+let _sheetWasOpen = false;
+let _accountWasOpen = false;
 const paint = () => { if (_root) renderMobile(_root); };
 
 const go = (tab) => { mob.tab = tab; paint(); };
@@ -413,24 +416,26 @@ function sheetBody() {
 }
 const savedNote = () => h('div', { style: { textAlign: 'center', fontSize: '11px', color: 'var(--muted2)', marginTop: '10px' } }, t('mSavedToProject'));
 
-function sheet() {
+function sheet(animate) {
+  const a = animate ? ' m-anim-sheet' : '';
   return h('div', {},
-    h('div', { class: 'm-overlay', onclick: () => { mob.sheet = null; paint(); } }),
-    h('div', { class: 'm-sheet' },
+    h('div', { class: 'm-overlay' + a, onclick: () => { mob.sheet = null; paint(); } }),
+    h('div', { class: 'm-sheet' + a },
       h('div', { class: 'm-sheet-grab' }),
       sheetBody()));
 }
 
 // ── ACCOUNT MENU (logout / switch project / language / password) ────────────
-function accountSheet() {
+function accountSheet(animate) {
+  const a = animate ? ' m-anim-sheet' : '';
   const close = () => { mob.account = false; paint(); };
   const row = (label, value, onclick) => h('div', { class: 'm-menu-row', onclick },
     h('div', { style: { flex: 1, fontWeight: 600, fontSize: '14px' } }, label),
     value ? h('span', { style: { fontSize: '13px', color: 'var(--muted)' } }, value) : null,
     h('span', { style: { color: 'var(--muted2)', fontSize: '18px' } }, '›'));
   return h('div', {},
-    h('div', { class: 'm-overlay', onclick: close }),
-    h('div', { class: 'm-sheet' },
+    h('div', { class: 'm-overlay' + a, onclick: close }),
+    h('div', { class: 'm-sheet' + a },
       h('div', { class: 'm-sheet-grab' }),
       h('div', { style: { fontSize: '17px', fontWeight: 800, marginBottom: '2px' } }, state.user ? state.user.display_name : ''),
       h('div', { style: { fontSize: '12px', color: 'var(--muted)', marginBottom: '14px' } }, state.user ? state.user.email : ''),
@@ -461,10 +466,19 @@ export function renderMobile(root) {
     : mob.tab === 'costs' ? costsScreen(d)
     : mob.tab === 'album' ? albumScreen()
     : homeScreen(d);
+  // Fade only on a genuine tab change — not on every mutation re-render (a task
+  // toggle shouldn't replay a screen fade; frequent actions stay still).
+  if (mob.tab !== _lastTab) screen.classList.add('m-anim');
+  _lastTab = mob.tab;
+  // Slide/fade the sheets only on the open transition, not on sub-sheet swaps.
+  const sheetOpening = !!mob.sheet && !_sheetWasOpen;
+  const accountOpening = !!mob.account && !_accountWasOpen;
+  _sheetWasOpen = !!mob.sheet;
+  _accountWasOpen = !!mob.account;
 
   root.append(h('div', { class: 'm-app' },
     h('div', { class: 'm-scroll' }, screen),
     bottomNav(),
-    mob.sheet ? sheet() : null,
-    mob.account ? accountSheet() : null));
+    mob.sheet ? sheet(sheetOpening) : null,
+    mob.account ? accountSheet(accountOpening) : null));
 }

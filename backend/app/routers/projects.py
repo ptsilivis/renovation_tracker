@@ -50,10 +50,12 @@ def create_project(body: dict = Body(...), db: Session = Depends(get_db)):
     db.add(project)
     db.flush()  # project row must exist before scaffolded FK-bearing rows
 
-    # Scaffold with default categories / phases / starter tasks unless asked not to.
+    # Scaffold categories / phases / starter tasks unless asked not to. A `scope`
+    # from the new-project wizard tailors what gets created; without one, the
+    # full-renovation default is used.
     span = {}
     if not body.get("blank"):
-        span = scaffold_project(db, pid)
+        span = scaffold_project(db, pid, body.get("scope"))
 
     setting = Setting(
         id=pid,
