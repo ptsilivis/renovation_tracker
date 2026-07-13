@@ -133,19 +133,87 @@ function gettingStarted() {
   );
 }
 
-export default function render(root) {
+// The four budget/progress stat cards, as one widget.
+function statsWidget() {
   const { budget, spent, remaining } = budgetStats();
   const prog = taskProgress();
   const spentPct = budget ? spent / budget * 100 : 0;
+  return h('div', { class: 'stat-grid' },
+    budgetCard(budget),
+    statCard(t('statSpent'), money(spent), Math.round(spentPct) + '%', spentPct, spentPct > 100 ? 'var(--accent)' : 'var(--teal)', spentPct > 100 ? 'var(--accent)' : undefined),
+    statCard(t('statRemaining'), money(remaining), '', 100 - spentPct, remaining < 0 ? 'var(--accent)' : 'var(--ok)', remaining < 0 ? 'var(--accent)' : undefined),
+    statCard(t('statProgress'), prog.pct + '%', `${prog.done}/${prog.total}`, prog.pct, 'var(--teal)'));
+}
 
-  root.append(h('section', { class: 'section' },
-    gettingStarted(),
-    h('div', { class: 'stat-grid' },
-      budgetCard(budget),
-      statCard(t('statSpent'), money(spent), Math.round(spentPct) + '%', spentPct, spentPct > 100 ? 'var(--accent)' : 'var(--teal)', spentPct > 100 ? 'var(--accent)' : undefined),
-      statCard(t('statRemaining'), money(remaining), '', 100 - spentPct, remaining < 0 ? 'var(--accent)' : 'var(--ok)', remaining < 0 ? 'var(--accent)' : undefined),
-      statCard(t('statProgress'), prog.pct + '%', `${prog.done}/${prog.total}`, prog.pct, 'var(--teal)')),
-    gantt(),
-    h('div', { class: 'two-col' }, plannedVsActual(), h('div', { style: { display: 'flex', flexDirection: 'column', gap: '16px' } }, nextTasks(), recentActivity())),
-  ));
+// Dashboard widgets in their default order. `wide` widgets span both columns.
+const WIDGETS = {
+  stats: { wide: true, el: statsWidget },
+  timeline: { wide: true, el: gantt },
+  planned: { wide: false, el: plannedVsActual },
+  tasks: { wide: false, el: nextTasks },
+  activity: { wide: false, el: recentActivity },
+};
+const DEFAULT_ORDER = ['stats', 'timeline', 'planned', 'tasks', 'activity'];
+
+export default function render(root) {
+  const KEY = 'rh_dash_' + store.state.projectId;
+  const loadOrder = () => {
+    let saved = [];
+    try { saved = JSON.parse(localStorage.getItem(KEY)) || []; } catch { saved = []; }
+    const order = saved.filter((id) => id in WIDGETS);
+    for (const id of DEFAULT_ORDER) if (!order.includes(id)) order.push(id); // append any new widgets
+    return order;
+  };
+  const saveOrder = (order) => localStorage.setItem(KEY, JSON.stringify(order));
+
+  function build() {
+    const grid = h('div', { class: 'dash-grid' });
+
+    const attachDrag = (grip, widget, id) => {
+      grip.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        // Snapshot every widget's centre before the drag so we can pick a drop target.
+        const rects = [...grid.querySelectorAll('.dash-widget')].map((w) => {
+          const r = w.getBoundingClientRect();
+          return { id: w.dataset.id, cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+        });
+        const x0 = e.clientX, y0 = e.clientY;
+        widget.classList.add('dragging');
+        const move = (ev) => { widget.style.transform = `translate(${ev.clientX - x0}px, ${ev.clientY - y0}px)`; };
+        const up = (ev) => {
+          document.removeEventListener('pointermove', move);
+          document.removeEventListener('pointerup', up);
+          widget.classList.remove('dragging'); widget.style.transform = '';
+          let best = null, bestD = Infinity;
+          for (const it of rects) {
+            const d = Math.hypot(ev.clientX - it.cx, ev.clientY - it.cy);
+            if (d < bestD) { bestD = d; best = it.id; }
+          }
+          if (best && best !== id) {
+            const order = loadOrder();
+            order.splice(order.indexOf(id), 1);
+            order.splice(order.indexOf(best), 0, id);
+            saveOrder(order); build();
+          }
+        };
+        document.addEventListener('pointermove', move);
+        document.addEventListener('pointerup', up);
+      });
+    };
+
+    for (const id of loadOrder()) {
+      const w = WIDGETS[id];
+      const grip = h('button', { class: 'dash-grip', type: 'button', title: t('dragReorder'), 'aria-label': t('dragReorder') }, '⠿');
+      const widget = h('div', { class: 'dash-widget' + (w.wide ? ' wide' : ''), dataset: { id } }, grip, w.el());
+      attachDrag(grip, widget, id);
+      grid.append(widget);
+    }
+
+    root.replaceChildren(h('section', { class: 'section' },
+      gettingStarted(),
+      h('div', { class: 'hint dash-hint' }, t('dashReorder')),
+      grid));
+  }
+
+  build();
 }

@@ -121,15 +121,16 @@ export function gantt() {
     const track = h('div', { class: 'gt-track' }, bar);
 
     const setBar = () => { bar.style.left = pctL(sI) + '%'; bar.style.width = pctW(sI, eI) + '%'; };
-    // move whole bar
+    // move whole bar — commit only if the month actually changed, so a plain
+    // click on the bar doesn't fire a no-op write + full refetch (that was the lag).
     bar.addEventListener('pointerdown', (e) => {
       if (e.target !== bar) return; // handles manage themselves
       const s0 = sI, e0 = eI, len = e0 - s0;
       dragMonths(e, track, span, (d) => { sI = clamp(s0 + d, min, max - len); eI = sI + len; setBar(); },
-        () => store.update('phases', p.id, { start: toStr(sI), end: toStr(eI) }));
+        () => { if (sI !== s0 || eI !== e0) store.update('phases', p.id, { start: toStr(sI), end: toStr(eI) }); });
     });
-    hL.addEventListener('pointerdown', (e) => { const s0 = sI; dragMonths(e, track, span, (d) => { sI = clamp(s0 + d, min, eI); setBar(); }, () => store.update('phases', p.id, { start: toStr(sI) })); });
-    hR.addEventListener('pointerdown', (e) => { const e0 = eI; dragMonths(e, track, span, (d) => { eI = clamp(e0 + d, sI, max); setBar(); }, () => store.update('phases', p.id, { end: toStr(eI) })); });
+    hL.addEventListener('pointerdown', (e) => { const s0 = sI; dragMonths(e, track, span, (d) => { sI = clamp(s0 + d, min, eI); setBar(); }, () => { if (sI !== s0) store.update('phases', p.id, { start: toStr(sI) }); }); });
+    hR.addEventListener('pointerdown', (e) => { const e0 = eI; dragMonths(e, track, span, (d) => { eI = clamp(e0 + d, sI, max); setBar(); }, () => { if (eI !== e0) store.update('phases', p.id, { end: toStr(eI) }); }); });
 
     // milestone diamond
     if (p.milestone) {

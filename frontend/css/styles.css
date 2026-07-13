@@ -145,6 +145,26 @@ select.field { padding: 8px 10px; }
 .bar-fill { height: 100%; border-radius: 999px; }
 .two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px,1fr)); gap: 16px; align-items: start; }
 
+/* reorderable dashboard widgets */
+.dash-hint { margin-top: -4px; }
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.dash-widget { position: relative; min-width: 0; transition: opacity var(--dur-2) var(--ease); }
+.dash-widget.wide { grid-column: 1 / -1; }
+.dash-widget.dragging { opacity: 0.96; z-index: 20; }
+/* A grab handle floating in the gap above each widget — never overlaps content. */
+.dash-grip {
+  position: absolute; top: -11px; left: 50%; transform: translateX(-50%); z-index: 4;
+  width: 42px; height: 18px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--card); color: var(--muted2); cursor: grab; font-size: 12px; line-height: 1;
+  display: flex; align-items: center; justify-content: center; touch-action: none;
+  box-shadow: var(--shadow); opacity: 0; transition: opacity var(--dur-2) var(--ease), color var(--dur-2) var(--ease);
+}
+.dash-widget:hover .dash-grip { opacity: 1; }
+.dash-grip:hover { color: var(--teal); }
+.dash-grip:active { cursor: grabbing; }
+@media (hover: none) { .dash-grip { opacity: 1; } }        /* touch: always visible */
+@media (max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } }
+
 /* timeline */
 .tl-scroll { overflow-x: auto; }
 .tl-inner { min-width: 680px; }
@@ -449,10 +469,9 @@ main.main > section { animation: kh-fade var(--dur-2) var(--ease) both; }
   display: flex; align-items: flex-start; justify-content: space-between;
 }
 .m-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 52px; cursor: pointer; }
-.m-nav-ico { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: var(--muted2); border: 2px solid var(--muted2); }
-.m-nav-ico.sq { border-radius: 5px; }
-.m-nav-ico.circ, .m-nav-ico.euro { border-radius: 999px; }
-.m-nav-ico.on { background: var(--teal); border-color: var(--teal); color: #fff; }
+.m-nav-ico { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; color: var(--muted2); }
+.m-nav-ico.on { color: var(--teal); }
+.m-nav-ico svg { display: block; }
 .m-nav-lbl { font-size: 10px; font-weight: 600; color: var(--muted2); }
 .m-nav-lbl.on { font-weight: 700; color: var(--teal); }
 .m-fab {

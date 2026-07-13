@@ -3,7 +3,7 @@
 // Timeline / Costs / Album), a bottom nav with a center + FAB, and a quick-add
 // bottom sheet. Reads the same snapshot as the desktop screens and shares the
 // Blueprint theme tokens (css/styles.css :root) with them for one brand.
-import { h, money } from './ui.js';
+import { h, money, svgEl } from './ui.js';
 import { coll, settings, currentProject, clearProject, setLang, state } from './state.js';
 import * as store from './state.js';
 import { t, localName } from './i18n.js';
@@ -293,20 +293,32 @@ function albumScreen() {
 const emptyNote = () => h('div', { class: 'm-sub', style: { padding: '2px 0 4px' } }, '—');
 
 // ── BOTTOM NAV ─────────────────────────────────────────────────────────────
-function navItem(tab, label, iconShape, active) {
+// Small line icons (24-grid, currentColor stroke) — color flips teal when active.
+function navIcon(name) {
+  const svg = (...kids) => svgEl('svg', {
+    viewBox: '0 0 24 24', width: 22, height: 22, fill: 'none', stroke: 'currentColor',
+    'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+  }, ...kids);
+  if (name === 'home') return svg(svgEl('path', { d: 'M4 12 L12 5 L20 12' }), svgEl('path', { d: 'M6 10.5 V19 H18 V10.5' }));
+  if (name === 'tasks') return svg(svgEl('rect', { x: 4, y: 4, width: 16, height: 16, rx: 4 }), svgEl('polyline', { points: '8.5 12.5 11 15 15.5 9.5' }));
+  if (name === 'costs') return svg(svgEl('path', { d: 'M16.5 8.4 A5.5 5.5 0 1 0 16.5 15.6' }), svgEl('line', { x1: 6, y1: 11, x2: 14, y2: 11 }), svgEl('line', { x1: 6, y1: 13.6, x2: 13, y2: 13.6 }));
+  return svg(svgEl('rect', { x: 4, y: 4, width: 7, height: 7, rx: 1.6 }), svgEl('rect', { x: 13, y: 4, width: 7, height: 7, rx: 1.6 }),
+    svgEl('rect', { x: 4, y: 13, width: 7, height: 7, rx: 1.6 }), svgEl('rect', { x: 13, y: 13, width: 7, height: 7, rx: 1.6 })); // album
+}
+function navItem(tab, label, icon, active) {
   return h('div', { class: 'm-nav-item', onclick: () => go(tab) },
-    h('span', { class: 'm-nav-ico ' + iconShape + (active ? ' on' : '') }, iconShape === 'euro' ? '€' : ''),
+    h('span', { class: 'm-nav-ico' + (active ? ' on' : '') }, navIcon(icon)),
     h('span', { class: 'm-nav-lbl' + (active ? ' on' : '') }, label));
 }
 function bottomNav() {
   const tab = mob.tab;
   const homeActive = tab === 'home' || tab === 'timeline';
   return h('div', { class: 'm-nav' },
-    navItem('home', t('mHome'), 'sq', homeActive),
-    navItem('tasks', t('navTasks'), 'sq', tab === 'tasks'),
+    navItem('home', t('mHome'), 'home', homeActive),
+    navItem('tasks', t('navTasks'), 'tasks', tab === 'tasks'),
     h('div', { class: 'm-fab', onclick: () => { mob.sheet = 'menu'; paint(); } }, '+'),
-    navItem('costs', t('mCosts'), 'euro', tab === 'costs'),
-    navItem('album', t('mAlbum'), 'circ', tab === 'album'));
+    navItem('costs', t('mCosts'), 'costs', tab === 'costs'),
+    navItem('album', t('mAlbum'), 'album', tab === 'album'));
 }
 
 // ── QUICK-ADD SHEET ────────────────────────────────────────────────────────

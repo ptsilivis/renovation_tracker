@@ -51,6 +51,7 @@ const DICT = {
     ganttHint: 'Σύρετε τις μπάρες για αλλαγή ημερομηνιών, κλικ στη γραμμή για ορόσημο, σύρετε ⠿ για αναδιάταξη.',
     plannedVsActual: 'Προϋπολογισμός vs Πραγματικό', planned: 'Πρόβλεψη', actual: 'Πραγματικό',
     nextTasks: 'Επόμενες εργασίες', recentActivity: 'Πρόσφατη δραστηριότητα',
+    dashReorder: 'Σύρετε ⠿ για αναδιάταξη των πλαισίων.',
 
     // tasks
     manageCategories: 'Διαχείριση κατηγοριών', categoriesTitle: 'Κατηγορίες',
@@ -158,6 +159,7 @@ const DICT = {
     ganttHint: 'Drag bars to change dates, click a row to set a milestone, drag ⠿ to reorder.',
     plannedVsActual: 'Planned vs Actual', planned: 'Planned', actual: 'Actual',
     nextTasks: 'Next tasks', recentActivity: 'Recent activity',
+    dashReorder: 'Drag ⠿ to rearrange the panels.',
 
     manageCategories: 'Manage categories', categoriesTitle: 'Categories',
     newCategoryPlaceholder: 'New category…', add: 'Add', addTask: 'Task',
