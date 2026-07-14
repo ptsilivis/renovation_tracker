@@ -65,14 +65,26 @@ single-database over instead of seeding, restore a `pg_dump` here.
 
 ## 6. Run under systemd
 
-Edit `deploy/renovation-api.service` so `User=` and the paths match your account,
-then:
+Edit `deploy/renovation-api.service` so `User=` and the paths match your account.
+The base unit is a **template with host-specific paths**; the environment (e.g.
+`RENOHUB_ENV=prod`) lives in a separate **drop-in** so it can be copied safely.
+First-time install:
 ```bash
-sudo cp deploy/renovation-api.service /etc/systemd/system/
+sudo cp deploy/renovation-api.service /etc/systemd/system/            # base unit (first time only)
+sudo mkdir -p /etc/systemd/system/renovation-api.service.d
+sudo cp deploy/renovation-api.service.d/10-env.conf \
+        /etc/systemd/system/renovation-api.service.d/                 # RENOHUB_ENV=prod
 sudo systemctl daemon-reload
 sudo systemctl enable --now renovation-api
 curl -s localhost:8000/api/health      # {"ok":true}
 ```
+
+> **Do not `sudo cp deploy/renovation-api.service` on later deploys.** It ships
+> placeholder `User=pi` / `/home/pi/...` paths and will overwrite your host's real
+> `User`/paths → the service crash-loops with `status=217/USER`. `deploy/update.sh`
+> never touches the unit. To change env vars, edit the drop-in and re-copy only
+> `10-env.conf` (it carries no host paths).
+
 The app serves both the API and the static frontend, so port 8000 is the whole site
 (bound to 127.0.0.1 — only the tunnel reaches it).
 

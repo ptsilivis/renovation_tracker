@@ -1,7 +1,14 @@
-# systemd unit for the RenoHub API (uvicorn).
-# Install: sudo cp deploy/renovation-api.service /etc/systemd/system/
-#          sudo systemctl daemon-reload && sudo systemctl enable --now renovation-api
-# Adjust User and paths if you did not clone to /home/pi/renovation_tracker.
+# systemd unit for the RenoHub API (uvicorn) — TEMPLATE.
+# The User= and paths below are placeholders. Edit them to match your host, then
+# install ONCE. Do NOT `sudo cp` this over a working host unit on later deploys —
+# it clobbers your host-specific User/paths (→ status=217/USER crash loop).
+# Host-specific env (e.g. RENOHUB_ENV=prod) lives in a drop-in, not this file:
+#   deploy/renovation-api.service.d/10-env.conf  (safe to cp; no host paths)
+# Install:
+#   sudo cp deploy/renovation-api.service /etc/systemd/system/   # first time only
+#   sudo mkdir -p /etc/systemd/system/renovation-api.service.d
+#   sudo cp deploy/renovation-api.service.d/10-env.conf /etc/systemd/system/renovation-api.service.d/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now renovation-api
 [Unit]
 Description=RenoHub API
 After=network.target postgresql.service
@@ -12,8 +19,8 @@ Type=simple
 User=pi
 WorkingDirectory=/home/pi/renovation_tracker/backend
 Environment=PYTHONUNBUFFERED=1
-# Marks this as a production host: the app fails fast if secrets/cookie are unsafe.
-Environment=RENOHUB_ENV=prod
+# RENOHUB_ENV=prod comes from the drop-in (renovation-api.service.d/10-env.conf),
+# not here, so this template carries no environment-specific values.
 ExecStart=/home/pi/renovation_tracker/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
 Restart=on-failure
 RestartSec=3
