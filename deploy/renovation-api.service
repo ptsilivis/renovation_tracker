@@ -12,6 +12,8 @@ Type=simple
 User=pi
 WorkingDirectory=/home/pi/renovation_tracker/backend
 Environment=PYTHONUNBUFFERED=1
+# Marks this as a production host: the app fails fast if secrets/cookie are unsafe.
+Environment=RENOHUB_ENV=prod
 ExecStart=/home/pi/renovation_tracker/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
 Restart=on-failure
 RestartSec=3
