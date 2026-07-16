@@ -30,6 +30,7 @@ const eur = (n) => Math.round(Number(n) || 0).toLocaleString('el-GR');
 const catName = (id) => { const c = coll('categories').find((x) => x.id === id); return c ? localName(c) : ''; };
 const roomName = (id) => { const r = coll('rooms').find((x) => x.id === id); return r ? r.name : ''; };
 const dim = (cm) => (Number(cm) / 100).toLocaleString('el-GR', { maximumFractionDigits: 2 });
+const hostOf = (url) => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } };
 // Parse a Greek-formatted number: dot = thousands separator, comma = decimal
 // (e.g. "1.234,50" → 1234.5). Falls back to plain float when there's no comma.
 function parseNum(s) {
@@ -267,14 +268,19 @@ function albumScreen() {
   const measures = coll('surfaces').slice().reverse();
 
   const ideaGrid = h('div', { class: 'm-grid' }, ...ideas.map((i) => {
-    const comment = i.comment || i.url || '';
+    // Link the title (and a hostname row) when the idea carries a URL, so a tap
+    // opens the source — the desktop moodboard does the same.
+    const titleEl = i.url
+      ? h('a', { href: i.url, target: '_blank', rel: 'noopener', style: { fontWeight: 700, fontSize: '12.5px', lineHeight: 1.3, color: 'var(--ink)', textDecoration: 'none' } }, i.title)
+      : h('div', { style: { fontWeight: 700, fontSize: '12.5px', lineHeight: 1.3 } }, i.title);
     return h('div', { class: 'm-idea' },
       h('div', { class: 'm-row-between' },
         h('span', { style: { fontSize: '9.5px', fontWeight: 800, color: 'var(--teal)', letterSpacing: '0.08em' } }, t('mIdeaTag')),
         h('span', { style: { fontSize: '10px', fontWeight: 700, color: 'var(--muted2)' } }, '♥ ' + (i.likes || 0))),
-      h('div', { style: { fontWeight: 700, fontSize: '12.5px', lineHeight: 1.3 } }, i.title),
+      titleEl,
       h('div', { style: { fontSize: '10.5px', color: 'var(--muted2)' } }, roomName(i.room_id)),
-      comment ? h('div', { style: { fontSize: '11px', color: 'var(--muted)', fontStyle: 'italic', lineHeight: 1.35 } }, comment) : null);
+      i.comment ? h('div', { style: { fontSize: '11px', color: 'var(--muted)', fontStyle: 'italic', lineHeight: 1.35 } }, i.comment) : null,
+      i.url ? h('a', { href: i.url, target: '_blank', rel: 'noopener', style: { fontSize: '10.5px', fontWeight: 700, color: 'var(--teal)', textDecoration: 'none', wordBreak: 'break-all' } }, '↗ ' + hostOf(i.url)) : null);
   }));
 
   const measureGrid = h('div', { class: 'm-grid' }, ...measures.map((m) => h('div', { class: 'm-measure' },

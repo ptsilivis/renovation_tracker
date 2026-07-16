@@ -30,6 +30,9 @@ function renderLogin() {
     try {
       state.user = await api.login(email.value.trim(), pass.value);
       await loadProjects();
+      // Mirror boot(): a persisted project id must have its snapshot loaded
+      // before we render, or the mobile shell sticks on the loader.
+      if (state.projectId) { setApiProject(state.projectId); await loadData(); }
       renderApp();
     } catch {
       err.textContent = t('loginError');
