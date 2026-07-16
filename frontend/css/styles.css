@@ -537,6 +537,26 @@ main.main > section { animation: kh-fade var(--dur-2) var(--ease) both; }
 .m-sheet.m-anim-sheet { animation: m-sheet-in var(--dur-3) var(--ease-drawer) both; }
 .m-overlay.m-anim-sheet { animation: m-overlay-in var(--dur-2) var(--ease) both; }
 
-/* Tab change: content fades in (only when .m-anim is set on a real tab switch,
-   never on a mutation re-render), matching the desktop route transition. */
-.m-screen.m-anim { animation: kh-fade var(--dur-2) var(--ease) both; }
+/* Tab change: children rise + fade in a short stagger, telegraphing the new
+   screen arriving (only when .m-anim is set on a real tab switch, never on a
+   mutation re-render). Restrained: 8px lift, ~40ms steps, no overshoot. */
+.m-screen.m-anim > * { animation: kh-rise 320ms var(--ease) both; }
+.m-screen.m-anim > *:nth-child(1) { animation-delay: 20ms; }
+.m-screen.m-anim > *:nth-child(2) { animation-delay: 60ms; }
+.m-screen.m-anim > *:nth-child(3) { animation-delay: 100ms; }
+.m-screen.m-anim > *:nth-child(4) { animation-delay: 140ms; }
+.m-screen.m-anim > *:nth-child(5) { animation-delay: 180ms; }
+.m-screen.m-anim > *:nth-child(n+6) { animation-delay: 220ms; }
+
+/* Progress fills wipe in from the left on the same entrance beat (grows toward
+   its value — telegraphs the number, not just paints it). Tab-enter only. */
+@keyframes kh-growx { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.m-screen.m-anim .m-hero-fill, .m-screen.m-anim .m-bar-fill {
+  transform-origin: left center;
+  animation: kh-growx var(--dur-3) var(--ease-drawer) 120ms both;
+}
+
+/* Bottom-nav: the selected tab lifts its icon a touch — spatial emphasis on the
+   current location, animated so switching tabs glides rather than snaps. */
+.m-nav-ico { transition: transform var(--dur-2) var(--ease); }
+.m-nav-ico.on { transform: translateY(-2px) scale(1.06); }
