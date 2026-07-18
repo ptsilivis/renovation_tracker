@@ -1,10 +1,11 @@
 // Bootstrap: login gate → project picker → render shell (header + active screen).
-import { api, setApiProject } from './api.js';
+import { api, setApiProject, setUnauthorizedHandler } from './api.js';
 import {
   state, loadData, loadProjects, currentProject, clearProject,
   onRerender, setLang,
 } from './state.js';
 import { t } from './i18n.js';
+import { toastError } from './toast.js';
 import { h, clear } from './ui.js';
 import { ROUTES, currentKey, renderScreen } from './router.js';
 import renderPicker from './screens/projects.js';
@@ -100,6 +101,15 @@ function renderApp() {
 }
 
 onRerender(renderApp);
+// Session expired mid-use → drop the user and return to login (keeps the saved
+// project id so re-login lands them back where they were). Ignored when already
+// logged out, so the normal boot-time 401 from api.me() is a no-op here.
+setUnauthorizedHandler(() => {
+  if (!state.user) return;
+  state.user = null;
+  toastError(t('sessionExpired'));
+  renderApp();
+});
 window.addEventListener('hashchange', () => { if (state.user && state.projectId && !isMobile()) renderApp(); });
 // Re-render when crossing the phone/desktop breakpoint so the right shell mounts.
 mq.addEventListener('change', () => { if (state.user && state.projectId) renderApp(); });

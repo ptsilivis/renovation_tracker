@@ -6,6 +6,12 @@
 let _project = null;
 export function setApiProject(id) { _project = id; }
 
+// Global 401 handler. Registered by app.js so any expired-session response —
+// from a mutation, a data refetch, anywhere — bounces the user back to login
+// instead of leaving dead taps. Called before the error propagates.
+let _onUnauthorized = null;
+export function setUnauthorizedHandler(fn) { _onUnauthorized = fn; }
+
 // Append ?project=<active> (or &project= if the path already has a query).
 function pq(path) {
   const sep = path.includes('?') ? '&' : '?';
@@ -19,7 +25,10 @@ async function req(method, path, body) {
     opts.body = JSON.stringify(body);
   }
   const res = await fetch('/api' + path, opts);
-  if (res.status === 401) throw new Error('unauthorized');
+  if (res.status === 401) {
+    if (_onUnauthorized) _onUnauthorized();
+    throw new Error('unauthorized');
+  }
   if (!res.ok) {
     let detail = res.statusText;
     try { detail = (await res.json()).detail || detail; } catch {}

@@ -12,6 +12,9 @@ const DICT = {
     // login
     loginTitle: 'RenoHub', loginEmail: 'Email', loginPassword: 'Κωδικός',
     loginBtn: 'Σύνδεση', loginError: 'Λάθος email ή κωδικός.',
+    saveFailed: 'Δεν αποθηκεύτηκε — δοκιμάστε ξανά.',
+    sessionExpired: 'Η συνεδρία έληξε. Συνδεθείτε ξανά.',
+    uploadFailed: 'Η μεταφόρτωση απέτυχε.',
 
     // project picker
     pickProject: 'Επιλέξτε έργο', newProject: 'Νέο έργο', projectName: 'Όνομα έργου',
@@ -124,6 +127,9 @@ const DICT = {
 
     loginTitle: 'RenoHub', loginEmail: 'Email', loginPassword: 'Password',
     loginBtn: 'Sign in', loginError: 'Wrong email or password.',
+    saveFailed: "Couldn't save — please try again.",
+    sessionExpired: 'Session expired. Please sign in again.',
+    uploadFailed: 'Upload failed.',
 
     // project picker
     pickProject: 'Choose a project', newProject: 'New project', projectName: 'Project name',

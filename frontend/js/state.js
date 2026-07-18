@@ -1,5 +1,7 @@
 // Shared app state + a single mutation path (write → refetch → re-render).
 import { api, setApiProject } from './api.js';
+import { toastError } from './toast.js';
+import { t } from './i18n.js';
 
 export const state = {
   user: null,
@@ -59,9 +61,18 @@ export const findById = (name, id) => coll(name).find((x) => x.id === id);
 // Mutations: apply on the server, then re-pull the snapshot and re-render.
 // Last-write-wins, correctness over latency — fine for 4 low-traffic users.
 export async function mutate(fn) {
-  await fn();
-  await loadData();
-  rerender();
+  try {
+    await fn();
+    await loadData();
+    rerender();
+  } catch (err) {
+    // A 401 is handled globally (api.js → app.js redirects to login); stay quiet
+    // here so we don't also flash a "couldn't save". Everything else: tell the
+    // user it didn't save. The write is server-first, so on failure local state
+    // is unchanged and the UI still shows the pre-action truth.
+    if (String(err && err.message) === 'unauthorized') return;
+    toastError(t('saveFailed'));
+  }
 }
 export const create = (c, item) => mutate(() => api.create(c, item));
 export const update = (c, id, patch) => mutate(() => api.update(c, id, patch));

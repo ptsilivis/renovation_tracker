@@ -3,6 +3,7 @@ import { coll, findById } from '../state.js';
 import * as store from '../state.js';
 import { api } from '../api.js';
 import { t } from '../i18n.js';
+import { toastError } from '../toast.js';
 
 const ui = { formOpen: false, roomFilter: '', form: null, imageName: null };
 const blankForm = () => ({ url: '', title: '', room_id: (coll('rooms')[0] || {}).id || '', comment: '' });
@@ -47,7 +48,12 @@ function form(rebuild) {
       select(f.room_id, roomOpts, (v) => { f.room_id = v; }),
       h('label', { class: 'btn-dashed', style: { display: 'inline-flex', gap: '8px', alignItems: 'center' } }, t('addPhoto'),
         h('input', { type: 'file', accept: 'image/*', style: { display: 'none' },
-          onchange: async (e) => { const file = e.target.files[0]; if (!file) return; const r = await api.upload(file); ui.imageName = r.name; rebuild(); } })),
+          onchange: async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            try { const r = await api.upload(file); ui.imageName = r.name; rebuild(); }
+            catch { toastError(t('uploadFailed')); }
+          } })),
       preview),
     h('textarea', { class: 'field', rows: 2, placeholder: t('commentPlaceholder'), style: { resize: 'vertical', fontFamily: 'inherit' }, oninput: (e) => { f.comment = e.target.value; } }),
     h('div', { style: { display: 'flex', gap: '8px' } },
